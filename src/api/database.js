@@ -55,11 +55,25 @@ export const getDraftPicks = async (yearId = null) => {
 
 export const addDraftPick = async (pickData) => {
   try {
-    console.log("Sending draft pick data to server:", pickData);
+    // Format player_api_lookup with curly braces and quotation marks if it doesn't already have them
+    let formattedPlayerName = pickData.player_api_lookup;
+    
+    // If the name doesn't already have the proper format, add the curly braces and quotation marks
+    if (!formattedPlayerName.startsWith('{"') || !formattedPlayerName.endsWith('"}')) {
+      // First strip any existing braces or quotes to avoid duplication
+      formattedPlayerName = formattedPlayerName.replace(/[{}"]/g, '');
+      // Then add the proper format
+      formattedPlayerName = `{"${formattedPlayerName}"}`;
+    }
+    
+    console.log("Sending draft pick data to server:", {
+      ...pickData,
+      player_api_lookup: formattedPlayerName
+    });
     
     // Call the database function draft_player
     const response = await axios.post(`${API_BASE_URL}/draftPlayer`, {
-      player_api_lookup: pickData.player_api_lookup,
+      player_api_lookup: formattedPlayerName,
       team_name: pickData.team_name,
       roster_position: pickData.roster_position || 'UTIL' // Default to UTIL if not specified
     });
@@ -78,7 +92,12 @@ export const addDraftPick = async (pickData) => {
     let errorMessage = 'Failed to draft player';
     
     if (error.response && error.response.data) {
-      errorMessage = error.response.data.error || error.response.data.details || errorMessage;
+      // If we have details from the database error, use those
+      if (error.response.data.details) {
+        errorMessage = error.response.data.details;
+      } else if (error.response.data.error) {
+        errorMessage = error.response.data.error;
+      }
     } else if (error.message) {
       errorMessage = error.message;
     }

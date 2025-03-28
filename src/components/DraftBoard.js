@@ -10,6 +10,7 @@ const DraftBoard = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedRosterSlot, setSelectedRosterSlot] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [teams, setTeams] = useState([]);
   const [currentYear, setCurrentYear] = useState(null);
@@ -80,6 +81,11 @@ const DraftBoard = () => {
       return;
     }
     
+    if (!selectedRosterSlot) {
+      alert("Please select a roster slot for this player.");
+      return;
+    }
+    
     try {
       // Get the team name from the selected team ID
       const team = teams.find(t => t.team_id.toString() === selectedTeam.toString());
@@ -105,7 +111,7 @@ const DraftBoard = () => {
       const pickData = {
         player_api_lookup: playerLookup,
         team_name: team.team_name,
-        roster_position: selectedPlayer.position || 'UTIL' // Default to UTIL if position not specified
+        roster_position: selectedRosterSlot // Use the selected roster slot
       };
       
       console.log("Drafting player with data:", pickData);
@@ -120,6 +126,7 @@ const DraftBoard = () => {
       // Reset selections
       setSelectedPlayer(null);
       setSelectedTeam('');
+      setSelectedRosterSlot('');
       
       // Show success message
       alert(`Player drafted: ${result.message || 'Success!'}`);
@@ -311,6 +318,48 @@ const DraftBoard = () => {
                   {selectedPlayer.throws && <div>Throws: {selectedPlayer.throws}</div>}
                   {selectedPlayer.id && <div>Player ID: {selectedPlayer.id || selectedPlayer.player_id}</div>}
                 </div>
+                
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label htmlFor="roster-slot-select">Select Roster Slot:</label>
+                  <select 
+                    id="roster-slot-select"
+                    value={selectedRosterSlot}
+                    onChange={(e) => setSelectedRosterSlot(e.target.value)}
+                    className="roster-slot-select"
+                  >
+                    <option value="">-- Select Roster Slot --</option>
+                    {/* Show appropriate slots based on player position */}
+                    {selectedPlayer.position === 'P' && (
+                      <>
+                        <option value="P 1">P 1</option>
+                        <option value="P 2">P 2</option>
+                        <option value="P 3">P 3</option>
+                        <option value="P 4">P 4</option>
+                        <option value="P 5">P 5</option>
+                        <option value="P 6">P 6</option>
+                        <option value="P 7">P 7</option>
+                      </>
+                    )}
+                    {selectedPlayer.position === 'C' && <option value="C">C</option>}
+                    {selectedPlayer.position === '1B' && <option value="1B">1B</option>}
+                    {selectedPlayer.position === '2B' && <option value="2B">2B</option>}
+                    {selectedPlayer.position === '3B' && <option value="3B">3B</option>}
+                    {selectedPlayer.position === 'SS' && <option value="SS">SS</option>}
+                    {selectedPlayer.position === 'OF' && (
+                      <>
+                        <option value="OF 1">OF 1</option>
+                        <option value="OF 2">OF 2</option>
+                        <option value="OF 3">OF 3</option>
+                      </>
+                    )}
+                    {/* Utility slots available for any position */}
+                    <option value="U 1">U 1</option>
+                    <option value="U 2">U 2</option>
+                    <option value="U 3">U 3</option>
+                    {/* Taxi squad option */}
+                    <option value="Taxi">Taxi Squad</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
@@ -318,7 +367,7 @@ const DraftBoard = () => {
           <button 
             className="make-pick-button"
             onClick={handleMakePick}
-            disabled={!selectedTeam || !selectedPlayer}
+            disabled={!selectedTeam || !selectedPlayer || !selectedRosterSlot}
           >
             Make Selection
           </button>
