@@ -32,6 +32,9 @@ const DraftBoard = () => {
         setDraftPicks(picks);
         
         setIsLoading(false);
+        
+        // Auto-select the team that's on the clock
+        determineTeamOnClock(teamsData, picks);
       } catch (error) {
         console.error('Error loading data:', error);
         setIsLoading(false);
@@ -40,6 +43,38 @@ const DraftBoard = () => {
 
     loadData();
   }, []);
+  
+  // Determine which team is on the clock
+  const determineTeamOnClock = (teamsList, picksList) => {
+    if (!teamsList || teamsList.length === 0) return;
+    
+    // Calculate the next pick number
+    const nextPickNumber = picksList.length + 1;
+    
+    // Calculate the round number (1-based) and position in the round (0-based)
+    const roundNumber = Math.ceil(nextPickNumber / teamsList.length);
+    const positionInRound = (nextPickNumber - 1) % teamsList.length;
+    
+    // Get the team on the clock (snake draft format)
+    let teamIndex;
+    if (roundNumber % 2 === 1) {
+      // Odd rounds go in ascending order by team_id
+      teamIndex = positionInRound;
+    } else {
+      // Even rounds go in descending order by team_id
+      teamIndex = teamsList.length - 1 - positionInRound;
+    }
+    
+    // Sort teams by team_id
+    const sortedTeams = [...teamsList].sort((a, b) => a.team_id - b.team_id);
+    
+    // Get the team on the clock
+    const teamOnClock = sortedTeams[teamIndex];
+    if (teamOnClock) {
+      console.log(`Team on clock: ${teamOnClock.team_name} (Round ${roundNumber}, Pick ${nextPickNumber})`);
+      setSelectedTeam(teamOnClock.team_id.toString());
+    }
+  };
 
   // Handle player search
   const handleSearch = async () => {
@@ -125,11 +160,13 @@ const DraftBoard = () => {
       
       // Reset selections
       setSelectedPlayer(null);
-      setSelectedTeam('');
       setSelectedRosterSlot('');
       
-      // Show success message
-      alert(`Player drafted: ${result.message || 'Success!'}`);
+      // Auto-select the next team on the clock
+      determineTeamOnClock(teams, updatedPicks);
+      
+      // Success message is now logged to console instead of showing an alert
+      console.log(`Player drafted: ${result.message || 'Success!'}`);
     } catch (error) {
       console.error('Error making draft pick:', error);
       alert(`Error drafting player: ${error.message || 'Please try again.'}`);
