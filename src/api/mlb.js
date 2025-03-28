@@ -1,24 +1,14 @@
 import axios from 'axios';
 
-// Base URL for MLB Stats API
-const MLB_API_BASE_URL = 'https://statsapi.mlb.com/api/v1';
+// Use our backend as a proxy to the MLB Stats API
+const API_BASE_URL = 'http://localhost:3001/api/mlb';
 
-/**
- * Get all MLB teams
- * @returns {Promise<Array>} Array of MLB teams
- */
+// Add an MLB teams proxy endpoint to the backend
 export const getMLBTeams = async () => {
   try {
-    const response = await axios.get(`${MLB_API_BASE_URL}/teams?sportId=1`);
-    return response.data.teams.map(team => ({
-      id: team.id,
-      name: team.name,
-      abbreviation: team.abbreviation,
-      teamName: team.teamName,
-      locationName: team.locationName,
-      division: team.division.name,
-      league: team.league.name
-    }));
+    // Use our database for teams instead of MLB API
+    const response = await axios.get('/api/teams?currentYear=true');
+    return response.data;
   } catch (error) {
     console.error('Error fetching MLB teams:', error);
     throw error;
@@ -53,31 +43,68 @@ export const getTeamRoster = async (teamId) => {
  */
 export const getPlayerDetails = async (playerId) => {
   try {
-    const response = await axios.get(`${MLB_API_BASE_URL}/people/${playerId}`);
-    const player = response.data.people[0];
+    // Use our proxy endpoint
+    const response = await axios.get(`${API_BASE_URL}/players/${playerId}`);
     
-    // Get player stats
-    const statsResponse = await axios.get(
-      `${MLB_API_BASE_URL}/people/${playerId}/stats?stats=season&season=${new Date().getFullYear()}`
-    );
+    // Check if we got a fallback response from our database
+    if (response.data.fallback) {
+      const player = response.data.player;
+      
+      // Format the player data to match what we expect
+      let position = '';
+      if (player.bln_p) position = 'P';
+      else if (player.bln_c) position = 'C';
+      else if (player.bln_1b) position = '1B';
+      else if (player.bln_2b) position = '2B';
+      else if (player.bln_ss) position = 'SS';
+      else if (player.bln_3b) position = '3B';
+      else if (player.bln_of) position = 'OF';
+      else if (player.bln_u) position = 'UTIL';
+      
+      return {
+        id: player.player_id,
+        py_mlb_lookup: player.py_mlb_lookup,
+        name: `${player.player_first_name} ${player.player_last_name}`,
+        fullName: `${player.player_first_name} ${player.player_last_name}`,
+        position: position,
+        positionName: position,
+        player_api_lookup: player.player_api_lookup,
+        mlbTeam: player.player_api_lookup
+      };
+    }
+    
+    // Process regular MLB API response
+    if (!response.data.people || response.data.people.length === 0) {
+      throw new Error(`No player found with ID ${playerId}`);
+    }
+    
+    const player = response.data.people[0];
     
     return {
       id: player.id,
-      name: `${player.firstName} ${player.lastName}`,
+      name: player.fullName,
       fullName: player.fullName,
-      position: player.primaryPosition.abbreviation,
-      positionName: player.primaryPosition.name,
+      position: player.primaryPosition?.abbreviation || '',
+      positionName: player.primaryPosition?.name || '',
       number: player.primaryNumber || '',
-      bats: player.batSide.code,
-      throws: player.pitchHand.code,
+      bats: player.batSide?.code || '',
+      throws: player.pitchHand?.code || '',
       birthDate: player.birthDate,
       mlbTeamId: player.currentTeam?.id,
       mlbTeamName: player.currentTeam?.name,
-      stats: statsResponse.data.stats[0]?.splits || []
+      player_api_lookup: player.fullName // For our database function
     };
   } catch (error) {
     console.error(`Error fetching details for player ${playerId}:`, error);
-    throw error;
+    
+    // Return minimal player data if we can't get details
+    return {
+      id: playerId,
+      name: 'Unknown Player',
+      fullName: 'Unknown Player',
+      position: '',
+      player_api_lookup: `Player ID: ${playerId}`
+    };
   }
 };
 
@@ -88,17 +115,43 @@ export const getPlayerDetails = async (playerId) => {
  */
 export const searchPlayersByName = async (query) => {
   try {
-    const response = await axios.get(`${MLB_API_BASE_URL}/players?season=${new Date().getFullYear()}&names=${query}`);
+    // Use our proxy endpoint instead of directly accessing MLB API
+    const response = await axios.get(`${API_BASE_URL}/players`, {
+      params: {
+        names: query,
+        season: new Date().getFullYear()
+      }
+    });
     
-    // Get detailed information for each player
-    const playerPromises = response.data.people.map(player => 
-      getPlayerDetails(player.id)
-    );
+    // If no results or error from MLB, use our database as fallback
+    if (!response.data.people || response.data.people.length === 0) {
+      // Fallback to our database search
+      console.log(`No MLB results for "${query}", falling back to database search`);
+      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
+      return backendResponse.data;
+    }
     
-    return Promise.all(playerPromises);
+    // Get detailed information for each player from MLB API results
+    return response.data.people.map(player => ({
+      id: player.id,
+      name: player.fullName,
+      position: player.primaryPosition?.abbreviation || '',
+      mlbTeam: player.currentTeam?.name || '',
+      player_api_lookup: player.fullName, // For our database function
+      mlbId: player.id
+    }));
   } catch (error) {
     console.error(`Error searching for players with query "${query}":`, error);
-    throw error;
+    
+    // Fallback to our database search on error
+    try {
+      console.log(`MLB API error for "${query}", falling back to database search`);
+      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
+      return backendResponse.data;
+    } catch (fallbackError) {
+      console.error('Fallback search also failed:', fallbackError);
+      throw error;
+    }
   }
 };
 

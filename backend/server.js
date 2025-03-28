@@ -1,3 +1,69 @@
+// MLB API player details proxy
+app.get('/api/mlb/players/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Use axios to make the request to MLB API
+    const axios = require('axios');
+    const response = await axios.get(`https://statsapi.mlb.com/api/v1/people/${id}`, {
+      headers: {
+        'User-Agent': 'Fantasy Baseball Draft App'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error(`Error proxying MLB API player details for ID ${req.params.id}:`, error.message);
+    
+    // Try to fall back to our database
+    try {
+      const result = await pool.query(`
+        SELECT * FROM ${schemaPrefix}fl_players
+        WHERE py_mlb_lookup = $1
+      `, [req.params.id]);
+      
+      if (result.rows.length > 0) {
+        return res.json({ fallback: true, player: result.rows[0] });
+      }
+      
+      res.status(404).json({ error: 'Player not found' });
+    } catch (dbError) {
+      console.error('Database fallback also failed:', dbError);
+      res.status(500).json({ error: 'Failed to fetch player details' });
+    }
+  }
+});// MLB API proxy
+app.get('/api/mlb/players', async (req, res) => {
+  try {
+    const { names, season } = req.query;
+    
+    // Use axios to make the request to MLB API
+    const axios = require('axios');
+    const response = await axios.get(`https://statsapi.mlb.com/api/v1/players`, {
+      params: {
+        names: names,
+        season: season || new Date().getFullYear()
+      },
+      headers: {
+        'User-Agent': 'Fantasy Baseball Draft App'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error proxying MLB API request:', error.message);
+    if (error.response) {
+      // If MLB API returned an error response, send it to the client
+      return res.status(error.response.status).json({
+        error: `MLB API error: ${error.response.status}`,
+        data: error.response.data
+      });
+    }
+    res.status(500).json({ error: 'Failed to fetch from MLB API' });
+  }
+});// Load environment variables first
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -13,13 +79,11 @@ app.use(bodyParser.json());
 
 // Configure PostgreSQL connection
 const pool = new Pool({
-  user: 'your_username',
-  host: 'localhost',
-  database: 'your_database',
-  password: 'your_password',
-  port: 5432,
-  // If you have a schema, uncomment and set this:
-  // schema: 'federal_league'
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    require: true,
+    rejectUnauthorized: false // Use this if you encounter SSL certificate validation issues
+  }
 });
 
 // Test database connection
@@ -32,18 +96,66 @@ pool.query('SELECT NOW()', (err, res) => {
 });
 
 // Schema prefix - use this consistently for all queries
-// Replace with your actual schema if different
-const schemaPrefix = 'federal_league.';
+const schemaPrefix = process.env.DB_SCHEMA ? `${process.env.DB_SCHEMA}.` : '';
 
 // API Routes
+
+// Get current year
+app.get('/api/currentYear', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT year_id, year_name 
+      FROM ${schemaPrefix}fl_year 
+      WHERE current_yr = true
+    `);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No current year found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching current year:', error);
+    res.status(500).json({ error: 'Failed to fetch current year' });
+  }
+});
 
 // Teams
 app.get('/api/teams', async (req, res) => {
   try {
-    const { yearId } = req.query;
-    const yearFilter = yearId ? `WHERE year_id = ${yearId}` : '';
+    const { yearId, currentYear } = req.query;
+    let query;
     
-    const result = await pool.query(`SELECT * FROM ${schemaPrefix}fl_teams ${yearFilter}`);
+    if (currentYear === 'true') {
+      // Get teams for the current year (where current_yr is true)
+      query = `
+        SELECT t.* 
+        FROM ${schemaPrefix}fl_teams t
+        JOIN ${schemaPrefix}fl_year y ON t.year_id = y.year_id
+        WHERE y.current_yr = true
+        ORDER BY t.team_id
+      `;
+    } else if (yearId) {
+      // Get teams for a specific year
+      query = `
+        SELECT * 
+        FROM ${schemaPrefix}fl_teams 
+        WHERE year_id = $1
+        ORDER BY team_id
+      `;
+    } else {
+      // Get all teams
+      query = `
+        SELECT * 
+        FROM ${schemaPrefix}fl_teams
+        ORDER BY team_id
+      `;
+    }
+    
+    const result = yearId 
+      ? await pool.query(query, [yearId])
+      : await pool.query(query);
+      
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching teams:', error);
@@ -101,7 +213,7 @@ app.put('/api/teams/:id', async (req, res) => {
   }
 });
 
-// Draft Picks
+// Draft picks operations
 app.get('/api/draftResults', async (req, res) => {
   try {
     const { yearId } = req.query;
@@ -115,20 +227,24 @@ app.get('/api/draftResults', async (req, res) => {
   }
 });
 
-app.post('/api/draftResults', async (req, res) => {
+// Draft player endpoint that calls the database function
+app.post('/api/draftPlayer', async (req, res) => {
   try {
-    const { year_id, team_id, player_id, roster_id } = req.body;
+    const { player_api_lookup, team_name, roster_position } = req.body;
     
+    // Call the database function
     const result = await pool.query(
-      `INSERT INTO ${schemaPrefix}fl_draft_results (year_id, team_id, player_id, roster_id) 
-       VALUES ($1, $2, $3, $4) RETURNING draft_result_id`,
-      [year_id, team_id, player_id, roster_id]
+      `SELECT ${schemaPrefix}draft_player($1, $2, $3) AS result`,
+      [player_api_lookup, team_name, roster_position]
     );
     
-    res.status(201).json({ draft_result_id: result.rows[0].draft_result_id });
+    res.status(201).json({ 
+      success: true, 
+      message: result.rows[0].result 
+    });
   } catch (error) {
-    console.error('Error creating draft result:', error);
-    res.status(500).json({ error: 'Failed to create draft result' });
+    console.error('Error drafting player:', error);
+    res.status(500).json({ error: 'Failed to draft player', details: error.message });
   }
 });
 

@@ -1,20 +1,28 @@
-import axios from 'axios';
+export const getCurrentYear = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/currentYear`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting current year:', error);
+    throw error;
+  }
+};import axios from 'axios';
 
 // Base URL for your backend API that connects to PostgreSQL
 const API_BASE_URL = 'http://localhost:3001/api';
 
-/**
- * Configure the API base URL
- * @param {string} baseUrl - New base URL for the API
- */
-export const configureApiUrl = (baseUrl) => {
-  API_BASE_URL = baseUrl;
-};
-
 // Teams operations
-export const getTeams = async (yearId = new Date().getFullYear()) => {
+export const getTeams = async (yearId = null) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/teams?yearId=${yearId}`);
+    // If no yearId is provided, get the current year
+    let yearFilter = '';
+    if (yearId) {
+      yearFilter = `?yearId=${yearId}`;
+    } else {
+      yearFilter = '?currentYear=true'; // New parameter to get current year teams
+    }
+    
+    const response = await axios.get(`${API_BASE_URL}/teams${yearFilter}`);
     return response.data;
   } catch (error) {
     console.error('Error getting teams:', error);
@@ -64,11 +72,36 @@ export const getDraftPicks = async (yearId = new Date().getFullYear()) => {
 
 export const addDraftPick = async (pickData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/draftResults`, pickData);
-    return response.data.draft_result_id;
+    console.log("Sending draft pick data to server:", pickData);
+    
+    // Call the database function draft_player instead of directly manipulating tables
+    // Parameters: player_api_lookup, team_name, roster_position
+    const response = await axios.post(`${API_BASE_URL}/draftPlayer`, {
+      player_api_lookup: pickData.player_api_lookup,
+      team_name: pickData.team_name,
+      roster_position: pickData.roster_position || 'UTIL' // Default to UTIL if not specified
+    });
+    
+    console.log("Server response:", response.data);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Unknown error drafting player');
+    }
+    
+    return response.data;
   } catch (error) {
     console.error('Error adding draft pick:', error);
-    throw error;
+    
+    // Extract the most useful error message
+    let errorMessage = 'Failed to draft player';
+    
+    if (error.response && error.response.data) {
+      errorMessage = error.response.data.error || error.response.data.details || errorMessage;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
 };
 

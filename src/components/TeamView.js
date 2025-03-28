@@ -27,30 +27,14 @@ const TeamView = ({ teams }) => {
       const team = await getTeam(teamId);
       setTeamDetails(team);
       setEditForm({
-        name: team.name,
-        owner: team.owner,
-        email: team.email || ''
+        team_name: team.team_name,
+        owner_id: team.owner_id
       });
       
       // Get team's draft picks
       const picks = await getTeamDraftPicks(teamId);
       
-      // Load player details for each pick
-      const playerPromises = picks.map(async (pick) => {
-        try {
-          const player = await getPlayerById(pick.playerId);
-          return {
-            ...pick,
-            player
-          };
-        } catch (error) {
-          console.error(`Error loading player ${pick.playerId}:`, error);
-          return pick;
-        }
-      });
-      
-      const roster = await Promise.all(playerPromises);
-      setTeamRoster(roster);
+      setTeamRoster(picks);
     } catch (error) {
       console.error('Error loading team data:', error);
     } finally {
@@ -65,26 +49,23 @@ const TeamView = ({ teams }) => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditForm({
-      name: teamDetails.name,
-      owner: teamDetails.owner,
-      email: teamDetails.email || ''
+      team_name: teamDetails.team_name,
+      owner_id: teamDetails.owner_id,
     });
   };
 
   const handleSaveTeam = async () => {
     try {
       await updateTeam(selectedTeamId, {
-        name: editForm.name,
-        owner: editForm.owner,
-        email: editForm.email
+        team_name: editForm.team_name,
+        owner_id: editForm.owner_id,
       });
       
       // Update local state
       setTeamDetails({
         ...teamDetails,
-        name: editForm.name,
-        owner: editForm.owner,
-        email: editForm.email
+        team_name: editForm.team_name,
+        owner_id: editForm.owner_id,
       });
       
       setIsEditing(false);
@@ -137,30 +118,19 @@ const TeamView = ({ teams }) => {
           <input 
             id="team-name"
             type="text"
-            name="name"
-            value={editForm.name}
+            name="team_name"
+            value={editForm.team_name}
             onChange={handleInputChange}
           />
         </div>
         
         <div className="form-group">
-          <label htmlFor="team-owner">Owner:</label>
+          <label htmlFor="team-owner">Owner ID:</label>
           <input 
             id="team-owner"
             type="text"
-            name="owner"
-            value={editForm.owner}
-            onChange={handleInputChange}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="team-email">Email:</label>
-          <input 
-            id="team-email"
-            type="email"
-            name="email"
-            value={editForm.email}
+            name="owner_id"
+            value={editForm.owner_id}
             onChange={handleInputChange}
           />
         </div>
@@ -179,22 +149,15 @@ const TeamView = ({ teams }) => {
     return (
       <div className="team-info">
         <div className="team-header">
-          <h3>{teamDetails.name}</h3>
+          <h3>{teamDetails.team_name}</h3>
           <button className="edit-button" onClick={handleEditTeam}>Edit Team</button>
         </div>
         
         <div className="team-meta">
           <div className="meta-item">
             <span className="meta-label">Owner:</span>
-            <span className="meta-value">{teamDetails.owner}</span>
+            <span className="meta-value">{teamDetails.owner_id}</span>
           </div>
-          
-          {teamDetails.email && (
-            <div className="meta-item">
-              <span className="meta-label">Email:</span>
-              <span className="meta-value">{teamDetails.email}</span>
-            </div>
-          )}
           
           <div className="meta-item">
             <span className="meta-label">Draft Picks:</span>

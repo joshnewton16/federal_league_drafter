@@ -32,13 +32,13 @@ const App = () => {
 
     switch (activeTab) {
       case 'draft':
-        return <DraftBoard teams={teams} />;
+        return <DraftBoard />;
       case 'search':
         return <PlayerSearch />;
       case 'teams':
         return <TeamView teams={teams} />;
       default:
-        return <DraftBoard teams={teams} />;
+        return <DraftBoard />;
     }
   };
 
