@@ -310,20 +310,29 @@ const DraftBoard = () => {
                     `${player.player_first_name || ''} ${player.player_last_name || ''}`.trim();
                   
                   // Get player position
-                  const position = player.position || '';
+                  const position = player.position || 
+                    (player.primaryPosition ? player.primaryPosition.abbreviation : '');
                   
                   // Get player team 
-                  const teamName = player.mlbTeam || player.mlbTeamName || player.player_api_lookup || '';
+                  const teamName = player.mlbTeam || 
+                    (player.currentTeam ? player.currentTeam.name : '') || 
+                    player.player_api_lookup || '';
+                  
+                  // Determine source for visual indicator
+                  const source = player.source || 'Unknown';
+                  const sourceClass = source === 'MLB API' ? 'source-mlb' : 'source-db';
                   
                   return (
                     <div 
                       key={`search-result-${player.id || player.player_id || index}`} 
-                      className="search-result-item"
+                      className={`search-result-item ${sourceClass}`}
                       onClick={() => handleSelectPlayer(player)}
                     >
                       <div className="player-name">{playerName}</div>
                       <div className="player-details">
-                        {position} {teamName ? `| ${teamName}` : ''}
+                        <span className="player-position">{position}</span>
+                        {teamName && <span className="player-team"> | {teamName}</span>}
+                        <span className="player-source"> ({source})</span>
                       </div>
                     </div>
                   );
@@ -348,9 +357,12 @@ const DraftBoard = () => {
                    'Unknown Player'}
                 </div>
                 <div className="player-details">
-                  <div>Position: {selectedPlayer.position || selectedPlayer.positionName || 'Unknown'}</div>
-                  <div>Team: {selectedPlayer.mlbTeamName || selectedPlayer.mlbTeam || 
-                              selectedPlayer.player_api_lookup || 'Unknown'}</div>
+                  <div>Position: {selectedPlayer.position || 
+                    (selectedPlayer.primaryPosition ? selectedPlayer.primaryPosition.abbreviation : 'Unknown')}</div>
+                  <div>Team: {selectedPlayer.mlbTeam || 
+                    (selectedPlayer.currentTeam ? selectedPlayer.currentTeam.name : '') || 
+                    selectedPlayer.player_api_lookup || 'Unknown'}</div>
+                  <div>Source: {selectedPlayer.source || 'Unknown'}</div>
                   {selectedPlayer.bats && <div>Bats: {selectedPlayer.bats}</div>}
                   {selectedPlayer.throws && <div>Throws: {selectedPlayer.throws}</div>}
                   {selectedPlayer.id && <div>Player ID: {selectedPlayer.id || selectedPlayer.player_id}</div>}
@@ -366,7 +378,8 @@ const DraftBoard = () => {
                   >
                     <option value="">-- Select Roster Slot --</option>
                     {/* Show appropriate slots based on player position */}
-                    {selectedPlayer.position === 'P' && (
+                    {(selectedPlayer.position === 'P' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'P')) && (
                       <>
                         <option value="P 1">P 1</option>
                         <option value="P 2">P 2</option>
@@ -377,12 +390,29 @@ const DraftBoard = () => {
                         <option value="P 7">P 7</option>
                       </>
                     )}
-                    {selectedPlayer.position === 'C' && <option value="C">C</option>}
-                    {selectedPlayer.position === '1B' && <option value="1B">1B</option>}
-                    {selectedPlayer.position === '2B' && <option value="2B">2B</option>}
-                    {selectedPlayer.position === '3B' && <option value="3B">3B</option>}
-                    {selectedPlayer.position === 'SS' && <option value="SS">SS</option>}
-                    {selectedPlayer.position === 'OF' && (
+                    {(selectedPlayer.position === 'C' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'C')) && 
+                      <option value="C">C</option>
+                    }
+                    {(selectedPlayer.position === '1B' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === '1B')) && 
+                      <option value="1B">1B</option>
+                    }
+                    {(selectedPlayer.position === '2B' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === '2B')) && 
+                      <option value="2B">2B</option>
+                    }
+                    {(selectedPlayer.position === '3B' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === '3B')) && 
+                      <option value="3B">3B</option>
+                    }
+                    {(selectedPlayer.position === 'SS' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'SS')) && 
+                      <option value="SS">SS</option>
+                    }
+                    {(selectedPlayer.position === 'OF' || 
+                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'OF') ||
+                      (selectedPlayer.primaryPosition && ['LF', 'CF', 'RF'].includes(selectedPlayer.primaryPosition.abbreviation))) && (
                       <>
                         <option value="OF 1">OF 1</option>
                         <option value="OF 2">OF 2</option>

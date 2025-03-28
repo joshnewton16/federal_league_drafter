@@ -1,4 +1,26 @@
-/* Roster slot selector */
+/* Search result sources */
+.source-mlb {
+  border-left: 3px solid #4CAF50; /* Green for MLB API */
+}
+
+.source-db {
+  border-left: 3px solid #2196F3; /* Blue for database */
+}
+
+.player-source {
+  font-size: 0.8rem;
+  color: #777;
+  margin-left: 0.5rem;
+}
+
+.player-position {
+  font-weight: 500;
+  color: #555;
+}
+
+.player-team {
+  color: #666;
+}/* Roster slot selector */
 .roster-slot-select {
   width: 100%;
   padding: 0.5rem;

@@ -10,50 +10,57 @@ const API_BASE_URL = 'http://localhost:3001/api/mlb';
  */
 export const searchPlayersByName = async (query) => {
   try {
-    console.log(`Searching for player: ${query}`);
+    if (!query || query.trim() === '') {
+      return [];
+    }
     
-    // Use our proxy endpoint instead of directly accessing MLB API
-    const response = await axios.get(`${API_BASE_URL}/players`, {
-      params: {
-        names: query,
-        season: new Date().getFullYear()
-      }
+    const searchTerm = query.trim();
+    console.log(`Searching for player: "${searchTerm}" using combined endpoint`);
+    
+    // Use the combined search endpoint
+    const response = await axios.get(`http://localhost:3001/api/player-search`, {
+      params: { term: searchTerm }
     });
     
-    console.log('MLB API response:', response.data);
+    console.log('Combined search response:', response.data);
     
-    // If no results or error from MLB, use our database as fallback
-    if (!response.data.people || response.data.people.length === 0) {
-      // Fallback to our database search - use the correct port 3001
-      console.log(`No MLB results for "${query}", falling back to database search`);
-      const backendResponse = await axios.get(`http://localhost:3001/api/players/search?term=${encodeURIComponent(query)}`);
-      console.log('Database search results:', backendResponse.data);
-      return backendResponse.data;
+    if (response.data && response.data.players && Array.isArray(response.data.players)) {
+      if (response.data.players.length > 0) {
+        console.log(`Found ${response.data.players.length} players in combined search`);
+        
+        // Do an additional filter on the client side to ensure we're getting relevant results
+        const filteredPlayers = response.data.players.filter(player => {
+          const fullName = (player.fullName || '').toLowerCase();
+          const firstName = (player.firstName || '').toLowerCase();
+          const lastName = (player.lastName || '').toLowerCase();
+          const searchTermLower = searchTerm.toLowerCase();
+          
+          return fullName.includes(searchTermLower) || 
+                firstName.includes(searchTermLower) || 
+                lastName.includes(searchTermLower);
+        });
+        
+        console.log(`Filtered to ${filteredPlayers.length} relevant players`);
+        
+        // Process player data to ensure consistent format
+        return filteredPlayers.map(player => ({
+          ...player,
+          // Ensure these fields exist with defaults if not present
+          id: player.id || 0,
+          fullName: player.fullName || '',
+          position: player.position || '',
+          mlbTeam: player.mlbTeam || '',
+          player_api_lookup: player.player_api_lookup || player.fullName || '',
+          source: player.source || 'Unknown'
+        }));
+      }
     }
     
-    // Map MLB API results to a consistent format
-    return response.data.people.map(player => ({
-      id: player.id,
-      name: player.fullName,
-      fullName: player.fullName,
-      position: player.primaryPosition?.abbreviation || '',
-      mlbTeam: player.currentTeam?.name || '',
-      player_api_lookup: player.fullName, // For our database function
-      mlbId: player.id
-    }));
+    console.log(`No results found for: "${searchTerm}"`);
+    return [];
   } catch (error) {
     console.error(`Error searching for players with query "${query}":`, error);
-    
-    // Fallback to our database search on error - use the correct port 3001
-    try {
-      console.log(`MLB API error for "${query}", falling back to database search`);
-      const backendResponse = await axios.get(`http://localhost:3001/api/players/search?term=${encodeURIComponent(query)}`);
-      console.log('Database fallback results:', backendResponse.data);
-      return backendResponse.data;
-    } catch (fallbackError) {
-      console.error('Fallback search also failed:', fallbackError);
-      return []; // Return empty array instead of throwing
-    }
+    return []; // Return empty array instead of throwing error
   }
 };
 
