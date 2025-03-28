@@ -22,6 +22,7 @@ import { getDraftPicks, addDraftPick, getTeams, getCurrentYear } from '../api/da
 import { searchPlayersByName } from '../api/mlb';
 
 const DraftBoard = () => {
+// Initialize state variables
 const [draftPicks, setDraftPicks] = useState([]);
 const [searchTerm, setSearchTerm] = useState('');
 const [searchResults, setSearchResults] = useState([]);

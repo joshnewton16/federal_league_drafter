@@ -3,36 +3,57 @@ import axios from 'axios';
 // Use our backend as a proxy to the MLB Stats API
 const API_BASE_URL = 'http://localhost:3001/api/mlb';
 
-// Add an MLB teams proxy endpoint to the backend
-export const getMLBTeams = async () => {
-  try {
-    // Use our database for teams instead of MLB API
-    const response = await axios.get('/api/teams?currentYear=true');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching MLB teams:', error);
-    throw error;
-  }
-};
-
 /**
- * Get active roster for a specific MLB team
- * @param {number} teamId - MLB team ID
- * @returns {Promise<Array>} Array of players on the team's active roster
+ * Search for players by name
+ * @param {string} query - Search query
+ * @returns {Promise<Array>} Array of matching players
  */
-export const getTeamRoster = async (teamId) => {
+export const searchPlayersByName = async (query) => {
   try {
-    const response = await axios.get(`${MLB_API_BASE_URL}/teams/${teamId}/roster/active`);
+    console.log(`Searching for player: ${query}`);
     
-    // Get detailed information for each player
-    const playerPromises = response.data.roster.map(player => 
-      getPlayerDetails(player.person.id)
-    );
+    // Use our proxy endpoint instead of directly accessing MLB API
+    const response = await axios.get(`${API_BASE_URL}/players`, {
+      params: {
+        names: query,
+        season: new Date().getFullYear()
+      }
+    });
     
-    return Promise.all(playerPromises);
+    console.log('MLB API response:', response.data);
+    
+    // If no results or error from MLB, use our database as fallback
+    if (!response.data.people || response.data.people.length === 0) {
+      // Fallback to our database search
+      console.log(`No MLB results for "${query}", falling back to database search`);
+      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
+      console.log('Database search results:', backendResponse.data);
+      return backendResponse.data;
+    }
+    
+    // Map MLB API results to a consistent format
+    return response.data.people.map(player => ({
+      id: player.id,
+      name: player.fullName,
+      fullName: player.fullName,
+      position: player.primaryPosition?.abbreviation || '',
+      mlbTeam: player.currentTeam?.name || '',
+      player_api_lookup: player.fullName, // For our database function
+      mlbId: player.id
+    }));
   } catch (error) {
-    console.error(`Error fetching roster for team ${teamId}:`, error);
-    throw error;
+    console.error(`Error searching for players with query "${query}":`, error);
+    
+    // Fallback to our database search on error
+    try {
+      console.log(`MLB API error for "${query}", falling back to database search`);
+      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
+      console.log('Database fallback results:', backendResponse.data);
+      return backendResponse.data;
+    } catch (fallbackError) {
+      console.error('Fallback search also failed:', fallbackError);
+      return []; // Return empty array instead of throwing
+    }
   }
 };
 
@@ -108,82 +129,15 @@ export const getPlayerDetails = async (playerId) => {
   }
 };
 
-/**
- * Search for players by name
- * @param {string} query - Search query
- * @returns {Promise<Array>} Array of matching players
- */
-export const searchPlayersByName = async (query) => {
+// Simplified version of team functions
+export const getMLBTeams = async () => {
   try {
-    // Use our proxy endpoint instead of directly accessing MLB API
-    const response = await axios.get(`${API_BASE_URL}/players`, {
-      params: {
-        names: query,
-        season: new Date().getFullYear()
-      }
-    });
-    
-    // If no results or error from MLB, use our database as fallback
-    if (!response.data.people || response.data.people.length === 0) {
-      // Fallback to our database search
-      console.log(`No MLB results for "${query}", falling back to database search`);
-      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
-      return backendResponse.data;
-    }
-    
-    // Get detailed information for each player from MLB API results
-    return response.data.people.map(player => ({
-      id: player.id,
-      name: player.fullName,
-      position: player.primaryPosition?.abbreviation || '',
-      mlbTeam: player.currentTeam?.name || '',
-      player_api_lookup: player.fullName, // For our database function
-      mlbId: player.id
-    }));
+    // Use our database for teams instead of MLB API
+    const response = await axios.get('/api/teams?currentYear=true');
+    return response.data;
   } catch (error) {
-    console.error(`Error searching for players with query "${query}":`, error);
-    
-    // Fallback to our database search on error
-    try {
-      console.log(`MLB API error for "${query}", falling back to database search`);
-      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
-      return backendResponse.data;
-    } catch (fallbackError) {
-      console.error('Fallback search also failed:', fallbackError);
-      throw error;
-    }
-  }
-};
-
-/**
- * Get players from farm system (minor leagues)
- * @param {number} teamId - MLB team ID
- * @returns {Promise<Array>} Array of minor league players
- */
-export const getMinorLeaguePlayers = async (teamId) => {
-  try {
-    // Get all affiliated minor league teams for this MLB team
-    const response = await axios.get(`${MLB_API_BASE_URL}/teams/affiliates?teamIds=${teamId}`);
-    const affiliateTeams = response.data.teams;
-    
-    // Get rosters for all affiliate teams
-    const rosterPromises = affiliateTeams.map(team => 
-      axios.get(`${MLB_API_BASE_URL}/teams/${team.id}/roster/fullRoster`)
-        .then(response => response.data.roster || [])
-    );
-    
-    const allRosters = await Promise.all(rosterPromises);
-    const allPlayers = allRosters.flat();
-    
-    // Get detailed information for each player
-    const playerPromises = allPlayers.map(player => 
-      getPlayerDetails(player.person.id)
-    );
-    
-    return Promise.all(playerPromises);
-  } catch (error) {
-    console.error(`Error fetching minor league players for team ${teamId}:`, error);
-    throw error;
+    console.error('Error fetching MLB teams:', error);
+    return [];
   }
 };
 
@@ -196,60 +150,46 @@ export const getMinorLeaguePlayers = async (teamId) => {
  */
 export const getPlayerStats = async (playerId, statGroup = 'hitting', season = new Date().getFullYear()) => {
   try {
-    const response = await axios.get(
-      `${MLB_API_BASE_URL}/people/${playerId}/stats?stats=season&season=${season}&group=${statGroup}`
-    );
+    // We'll create a proxy endpoint for this in the backend later
+    // For now, return a mock response
+    console.log(`Getting ${statGroup} stats for player ${playerId} for season ${season}`);
     
-    return response.data.stats[0]?.splits || [];
+    // Create mock data based on stat group
+    if (statGroup === 'hitting') {
+      return [{
+        stat: {
+          avg: 0.275,
+          homeRuns: 15,
+          rbi: 65,
+          runs: 70,
+          stolenBases: 5,
+          obp: 0.350,
+          slg: 0.450,
+          ops: 0.800,
+          atBats: 500,
+          hits: 137
+        }
+      }];
+    } else if (statGroup === 'pitching') {
+      return [{
+        stat: {
+          wins: 10,
+          losses: 8,
+          era: 3.75,
+          gamesPlayed: 30,
+          gamesStarted: 25,
+          saves: 0,
+          inningsPitched: 180.2,
+          strikeOuts: 170,
+          baseOnBalls: 60,
+          whip: 1.25
+        }
+      }];
+    } else {
+      return [];
+    }
   } catch (error) {
     console.error(`Error fetching ${statGroup} stats for player ${playerId}:`, error);
-    throw error;
-  }
-};
-
-/**
- * Sync all active MLB players to the local database
- * @param {Function} savePlayerCallback - Function to save player to database
- * @returns {Promise<number>} Number of players synced
- */
-export const syncMLBPlayersToDatabase = async (savePlayerCallback) => {
-  try {
-    // Get all MLB teams
-    const teams = await getMLBTeams();
-    let totalPlayers = 0;
-    
-    // For each team, get active roster and minor league players
-    for (const team of teams) {
-      // Get active roster
-      const activeRoster = await getTeamRoster(team.id);
-      
-      // Save each player to the database
-      for (const player of activeRoster) {
-        await savePlayerCallback({
-          ...player,
-          isActive: true,
-          isMinorLeague: false
-        });
-        totalPlayers++;
-      }
-      
-      // Get minor league players
-      const minorLeaguePlayers = await getMinorLeaguePlayers(team.id);
-      
-      // Save each minor league player to the database
-      for (const player of minorLeaguePlayers) {
-        await savePlayerCallback({
-          ...player,
-          isActive: false,
-          isMinorLeague: true
-        });
-        totalPlayers++;
-      }
-    }
-    
-    return totalPlayers;
-  } catch (error) {
-    console.error('Error syncing MLB players to database:', error);
-    throw error;
+    return [];
   }
 };

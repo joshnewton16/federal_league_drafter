@@ -1,12 +1,4 @@
-export const getCurrentYear = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/currentYear`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting current year:', error);
-    throw error;
-  }
-};import axios from 'axios';
+import axios from 'axios';
 
 // Base URL for your backend API that connects to PostgreSQL
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -19,7 +11,7 @@ export const getTeams = async (yearId = null) => {
     if (yearId) {
       yearFilter = `?yearId=${yearId}`;
     } else {
-      yearFilter = '?currentYear=true'; // New parameter to get current year teams
+      yearFilter = '?currentYear=true'; // Parameter to get current year teams
     }
     
     const response = await axios.get(`${API_BASE_URL}/teams${yearFilter}`);
@@ -40,16 +32,6 @@ export const getTeam = async (teamId) => {
   }
 };
 
-export const addTeam = async (teamData) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/teams`, teamData);
-    return response.data.team_id;
-  } catch (error) {
-    console.error('Error adding team:', error);
-    throw error;
-  }
-};
-
 export const updateTeam = async (teamId, teamData) => {
   try {
     await axios.put(`${API_BASE_URL}/teams/${teamId}`, teamData);
@@ -60,9 +42,10 @@ export const updateTeam = async (teamId, teamData) => {
 };
 
 // Draft picks operations
-export const getDraftPicks = async (yearId = new Date().getFullYear()) => {
+export const getDraftPicks = async (yearId = null) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/draftResults?yearId=${yearId}`);
+    const yearParam = yearId ? `?yearId=${yearId}` : '';
+    const response = await axios.get(`${API_BASE_URL}/draftResults${yearParam}`);
     return response.data;
   } catch (error) {
     console.error('Error getting draft picks:', error);
@@ -74,8 +57,7 @@ export const addDraftPick = async (pickData) => {
   try {
     console.log("Sending draft pick data to server:", pickData);
     
-    // Call the database function draft_player instead of directly manipulating tables
-    // Parameters: player_api_lookup, team_name, roster_position
+    // Call the database function draft_player
     const response = await axios.post(`${API_BASE_URL}/draftPlayer`, {
       player_api_lookup: pickData.player_api_lookup,
       team_name: pickData.team_name,
@@ -105,18 +87,10 @@ export const addDraftPick = async (pickData) => {
   }
 };
 
-export const updateDraftPick = async (pickId, pickData) => {
+export const getTeamDraftPicks = async (teamId, yearId = null) => {
   try {
-    await axios.put(`${API_BASE_URL}/draftResults/${pickId}`, pickData);
-  } catch (error) {
-    console.error('Error updating draft pick:', error);
-    throw error;
-  }
-};
-
-export const getTeamDraftPicks = async (teamId, yearId = new Date().getFullYear()) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/teams/${teamId}/draftResults?yearId=${yearId}`);
+    const yearParam = yearId ? `?yearId=${yearId}` : '';
+    const response = await axios.get(`${API_BASE_URL}/teams/${teamId}/draftResults${yearParam}`);
     return response.data;
   } catch (error) {
     console.error('Error getting team draft picks:', error);
@@ -172,32 +146,12 @@ export const getPlayerById = async (playerId) => {
   }
 };
 
-export const addPlayer = async (playerData) => {
+export const getCurrentYear = async () => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/players`, playerData);
-    return response.data.player_id;
+    const response = await axios.get(`${API_BASE_URL}/currentYear`);
+    return response.data;
   } catch (error) {
-    console.error('Error adding player:', error);
-    throw error;
-  }
-};
-
-export const updatePlayer = async (playerId, playerData) => {
-  try {
-    await axios.put(`${API_BASE_URL}/players/${playerId}`, playerData);
-  } catch (error) {
-    console.error('Error updating player:', error);
-    throw error;
-  }
-};
-
-// Sync players from MLB API to local database
-export const syncMLBPlayersToDatabase = async (players) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/players/sync`, { players });
-    return response.data.count;
-  } catch (error) {
-    console.error('Error syncing MLB players to database:', error);
+    console.error('Error getting current year:', error);
     throw error;
   }
 };

@@ -4,7 +4,7 @@ import PlayerSearch from './PlayerSearch';
 import TeamView from './TeamView';
 import { getTeams } from '../api/database';
 
-const App = () => {
+function AppComponent() {
   const [activeTab, setActiveTab] = useState('draft');
   const [teams, setTeams] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +74,6 @@ const App = () => {
       </main>
     </div>
   );
-};
+}
 
-export default App;
+export default AppComponent;
