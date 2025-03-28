@@ -174,3 +174,40 @@ export const getCurrentYear = async () => {
     throw error;
   }
 };
+
+export const getPlayerEligibility = async (playerLookup) => {
+  try {
+    // The playerLookup could be a name, MLB ID, or other identifier
+    const response = await fetch(`/api/players/eligibility?lookup=${encodeURIComponent(playerLookup)}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch player eligibility');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching player eligibility:', error);
+    return null; // Return null instead of throwing to handle gracefully in component
+  }
+};
+
+export const getTeamRoster = async (teamId) => {
+  //console.log(`getTeamRoster called for team ID: ${teamId}`);
+  try {
+    //console.log(`Making fetch request to /api/team-roster/${teamId}`);
+    //console.log(`${API_BASE_URL}/team-roster/${teamId}`);
+    const response = await fetch(`${API_BASE_URL}/team-roster/${teamId}`);
+    //console.log(`Received response with status: ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      //console.error(`Error response body: ${errorText}`);
+      throw new Error(`Failed to fetch team roster: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    //console.log(`Successfully parsed JSON, found ${data.length} roster entries`);
+    return data;
+  } catch (error) {
+    console.error(`Error in getTeamRoster for team ${teamId}:`, error);
+    return [];
+  }
+};

@@ -420,6 +420,7 @@ app.get('/api/player-search', async (req, res) => {
       
       // Format the database results
       const dbPlayers = dbResult.rows.map(player => {
+        // Still calculate the primary position string as before
         let position = '';
         if (player.bln_p) position = 'P';
         else if (player.bln_c) position = 'C';
@@ -430,6 +431,16 @@ app.get('/api/player-search', async (req, res) => {
         else if (player.bln_of) position = 'OF';
         else if (player.bln_u) position = 'UTIL';
         
+        // Calculate eligible positions array
+        const eligiblePositions = [];
+        if (player.bln_p) eligiblePositions.push('P');
+        if (player.bln_c) eligiblePositions.push('C');
+        if (player.bln_1b) eligiblePositions.push('1B');
+        if (player.bln_2b) eligiblePositions.push('2B');
+        if (player.bln_ss) eligiblePositions.push('SS');
+        if (player.bln_3b) eligiblePositions.push('3B');
+        if (player.bln_of) eligiblePositions.push('OF');
+        
         return {
           id: player.player_id,
           fullName: `${player.player_first_name} ${player.player_last_name}`.trim(),
@@ -437,6 +448,17 @@ app.get('/api/player-search', async (req, res) => {
           lastName: player.player_last_name || '',
           position: position,
           player_api_lookup: player.player_api_lookup,
+          // Include these boolean flags
+          bln_p: player.bln_p || false,
+          bln_c: player.bln_c || false,
+          bln_1b: player.bln_1b || false,
+          bln_2b: player.bln_2b || false,
+          bln_ss: player.bln_ss || false,
+          bln_3b: player.bln_3b || false,
+          bln_of: player.bln_of || false,
+          bln_u: player.bln_u || false,
+          // Include the eligiblePositions array for convenience
+          eligiblePositions: eligiblePositions,
           source: 'Database'
         };
       });
@@ -594,4 +616,140 @@ app.get('/api/mlb/player/:id', async (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+});
+
+// In your API routes file or Express server
+app.get('/api/players/eligibility', async (req, res) => {
+  const lookup = req.query.lookup;
+  
+  if (!lookup) {
+    return res.status(400).json({ message: 'Player lookup parameter is required' });
+  }
+  
+  try {
+    // Try to find the player in fl_players using various possible fields
+    const query = `
+      SELECT 
+        player_id,
+        player_first_name,
+        player_last_name,
+        player_api_lookup,
+        bln_p,
+        bln_c,
+        bln_1b,
+        bln_2b,
+        bln_ss,
+        bln_3b,
+        bln_of,
+        bln_u
+      FROM 
+        fl_players
+      WHERE 
+        player_api_lookup = $1 OR
+        player_id::text = $1 OR
+        CONCAT(player_first_name, ' ', player_last_name) ILIKE $1
+      LIMIT 1
+    `;
+    
+    const result = await pool.query(query, [lookup]);
+    
+    if (result.rows.length === 0) {
+      // Try a fuzzy match if exact match failed
+      const fuzzyQuery = `
+        SELECT 
+          player_id,
+          player_first_name,
+          player_last_name,
+          player_api_lookup,
+          bln_p,
+          bln_c,
+          bln_1b,
+          bln_2b,
+          bln_ss,
+          bln_3b,
+          bln_of,
+          bln_u
+        FROM 
+          fl_players
+        WHERE 
+          CONCAT(player_first_name, ' ', player_last_name) ILIKE $1
+        LIMIT 1
+      `;
+      
+      const fuzzyResult = await pool.query(fuzzyQuery, [`%${lookup}%`]);
+      
+      if (fuzzyResult.rows.length === 0) {
+        // No match found
+        return res.status(404).json({ 
+          message: 'Player not found in database',
+          lookup: lookup,
+          eligible_positions: [] 
+        });
+      }
+      
+      // Found with fuzzy match
+      const player = fuzzyResult.rows[0];
+      return res.status(200).json({
+        player_id: player.player_id,
+        player_name: `${player.player_first_name} ${player.player_last_name}`,
+        player_api_lookup: player.player_api_lookup,
+        eligible_positions: convertBooleanFlagsToPositions(player)
+      });
+    }
+    
+    // Found with exact match
+    const player = result.rows[0];
+    return res.status(200).json({
+      player_id: player.player_id,
+      player_name: `${player.player_first_name} ${player.player_last_name}`,
+      player_api_lookup: player.player_api_lookup,
+      eligible_positions: convertBooleanFlagsToPositions(player)
+    });
+    
+  } catch (error) {
+    console.error('Error fetching player eligibility:', error);
+    return res.status(500).json({ 
+      message: 'Server error fetching player eligibility',
+      error: error.message
+    });
+  }
+});
+
+// Helper function to convert boolean flags to position array
+function convertBooleanFlagsToPositions(player) {
+  const positions = [];
+  
+  if (player.bln_p) positions.push('P');
+  if (player.bln_c) positions.push('C');
+  if (player.bln_1b) positions.push('1B');
+  if (player.bln_2b) positions.push('2B');
+  if (player.bln_ss) positions.push('SS');
+  if (player.bln_3b) positions.push('3B');
+  if (player. _of) positions.push('OF');
+
+  console.log('positions:', positions);
+  
+  // We don't include utility (bln_u) in the positions array
+  // since it's not an actual position but a roster slot type
+  
+  return positions;
+}
+
+app.get('/api/team-roster/:teamId', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    
+    const query = `
+      SELECT r.*, s.roster_slot_name 
+      FROM ${schemaPrefix}.fl_rosters r
+      JOIN ${schemaPrefix}.def_roster_slot s ON r.roster_slot_id = s.roster_slot_id
+      WHERE r.team_id = $1
+    `;
+    
+    const result = await pool.query(query, [teamId]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error(`Error fetching roster for team ${req.params.teamId}:`, error);
+    res.status(500).json({ error: 'Failed to fetch team roster' });
+  }
 });

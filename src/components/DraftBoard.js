@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDraftPicks, addDraftPick, getTeams, getCurrentYear } from '../api/database';
+import { getDraftPicks, addDraftPick, getTeams, getCurrentYear, getTeamRoster } from '../api/database';
 import { searchPlayersByName } from '../api/mlb';
 
 const DraftBoard = () => {
@@ -14,6 +14,8 @@ const DraftBoard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [teams, setTeams] = useState([]);
   const [currentYear, setCurrentYear] = useState(null);
+  const [draftedPlayers, setDraftedPlayers] = useState(new Set());
+  const [filledRosterSlots, setFilledRosterSlots] = useState({});
 
   // Load data when component mounts
   useEffect(() => {
@@ -31,6 +33,29 @@ const DraftBoard = () => {
         const picks = await getDraftPicks();
         setDraftPicks(picks);
         
+        // Process existing picks to track drafted players
+        processExistingPicks(picks, teamsData);
+  
+        // NEW CODE: Process filled roster slots from draft picks
+        const filledSlots = {};
+        
+        // Initialize empty sets for all teams
+        teamsData.forEach(team => {
+          filledSlots[team.team_id] = new Set();
+        });
+        
+        // Fill slots based on existing draft picks
+        picks.forEach(pick => {
+          if (pick.team_id && pick.roster_position) {
+            console.log(`Adding filled slot for team ${pick.team_id}: ${pick.roster_position}`);
+            filledSlots[pick.team_id].add(pick.roster_position);
+          }
+        });
+        
+        // Update filled roster slots
+        console.log('Setting filled roster slots from draft picks:', filledSlots);
+        setFilledRosterSlots(filledSlots);
+        
         setIsLoading(false);
         
         // Auto-select the team that's on the clock
@@ -40,9 +65,93 @@ const DraftBoard = () => {
         setIsLoading(false);
       }
     };
-
+  
     loadData();
   }, []);
+  useEffect(() => {
+    console.log('Team selection changed to:', selectedTeam);
+    
+    if (!selectedTeam) {
+      console.log('No team selected, skipping roster load');
+      return;
+    }
+    
+    // Simple test to ensure the effect is running
+    console.log('Effect is running for team ID:', selectedTeam);
+    
+    const loadTeamRoster = async () => {
+      try {
+        console.log('Fetching roster for team ID:', selectedTeam);
+        const roster = await getTeamRoster(selectedTeam);
+        console.log('Received roster data:', roster);
+        
+        // Create a copy of the current filled slots
+        const updatedFilledSlots = { ...filledRosterSlots };
+        
+        // Initialize or reset the set for this team
+        updatedFilledSlots[selectedTeam] = new Set();
+        
+        // Add each filled slot from the roster data
+        roster.forEach(player => {
+          if (player.roster_slot_name) {
+            console.log(`Adding filled slot for team ${selectedTeam}: ${player.roster_slot_name}`);
+            updatedFilledSlots[selectedTeam].add(player.roster_slot_name);
+          }
+        });
+        
+        // Update the state with the new filled slots information
+        setFilledRosterSlots(updatedFilledSlots);
+        console.log('Updated filled roster slots:', updatedFilledSlots);
+      } catch (error) {
+        console.error('Error loading team roster:', error);
+      }
+    };
+    
+    loadTeamRoster();
+  }, [selectedTeam]); // Only depend on selectedTeam
+  
+  // Process existing picks to track drafted players and filled roster slots
+  const processExistingPicks = (picks, teamsList) => {
+    // Create set of already drafted players
+    const draftedPlayerIds = new Set();
+    console.log('picks:',picks);
+    console.log('teamsList: ', teamsList);
+    
+    // Create object to track filled roster slots by team
+    const filledSlots = {};
+    
+    // Initialize filled slots object for each team
+    teamsList.forEach(team => {
+      filledSlots[team.team_id] = new Set();
+    });
+    
+    // Process each draft pick
+    picks.forEach(pick => {
+      // Add player to drafted players set
+      if (pick.player_id) {
+        draftedPlayerIds.add(pick.player_id.toString());
+      }
+      
+      if (pick.player_api_lookup) {
+        draftedPlayerIds.add(pick.player_api_lookup);
+      }
+      
+      // Add roster slot to filled slots for the team
+      if (pick.team_id && pick.roster_position) {
+        if (!filledSlots[pick.team_id]) {
+          filledSlots[pick.team_id] = new Set();
+        }
+        filledSlots[pick.team_id].add(pick.roster_position);
+      }
+    });
+    
+    // Update state
+    setDraftedPlayers(draftedPlayerIds);
+    setFilledRosterSlots(filledSlots);
+    
+    console.log('Drafted players:', draftedPlayerIds);
+    console.log('Filled roster slots:', filledSlots);
+  };
   
   // Determine which team is on the clock
   const determineTeamOnClock = (teamsList, picksList) => {
@@ -84,29 +193,176 @@ const DraftBoard = () => {
     setSearchResults([]);
     
     try {
-      // First try MLB API via our proxy
+      // Search for players
       const players = await searchPlayersByName(searchTerm);
       
       if (players && players.length > 0) {
-        setSearchResults(players);
+        // Filter out MLB players if database players are available
+        const dbPlayers = players.filter(player => player.source === 'Database');
+        
+        if (dbPlayers.length > 0) {
+          console.log('Found players in database - using only database results');
+          setSearchResults(dbPlayers);
+        } else {
+          console.log('No database players found - using MLB API results');
+          setSearchResults(players);
+        }
       } else {
         console.log('No players found for search term:', searchTerm);
       }
     } catch (error) {
       console.error('Error searching players:', error);
-      // Don't set an empty array here, keep previous results if any
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Get eligible positions for a player
+  const getPlayerEligiblePositions = (player) => {
+    // If the player already has eligiblePositions array from the API, use it
+    if (player.eligiblePositions && Array.isArray(player.eligiblePositions)) {
+      return player.eligiblePositions;
+    }
+    
+    // Determine if player is from MLB API or database
+    const isFromMlbApi = player.source === 'MLB API' || (player.id && !player.player_id);
+    
+    if (isFromMlbApi) {
+      // MLB API players - use their single position
+      const position = player.position || 
+                       (player.primaryPosition ? player.primaryPosition.abbreviation : null);
+      
+      return position ? [position] : [];
+    } else {
+      // Database players - check for boolean flags
+      const positions = [];
+      
+      // Check each boolean flag directly
+      if (player.bln_p) positions.push('P');
+      if (player.bln_c) positions.push('C');
+      if (player.bln_1b) positions.push('1B');
+      if (player.bln_2b) positions.push('2B');
+      if (player.bln_ss) positions.push('SS');
+      if (player.bln_3b) positions.push('3B');
+      if (player.bln_of) positions.push('OF');
+      
+      // If we found positions from boolean flags, return them
+      if (positions.length > 0) {
+        return positions;
+      }
+      
+      // Otherwise, fall back to the single position if available
+      if (player.position) {
+        return [player.position];
+      }
+      
+      // If all else fails, return empty array
+      return [];
+    }
+  };
+
+  // Check if player is already drafted
+  const isPlayerDrafted = (player) => {
+    if (!player) return false;
+    
+    // Check by player_id for database players
+    if (player.player_id && draftedPlayers.has(player.player_id.toString())) {
+      return true;
+    }
+    
+    // Check by MLB ID for MLB API players
+    if (player.id && draftedPlayers.has(player.id.toString())) {
+      return true;
+    }
+    
+    // Check by player_api_lookup
+    if (player.player_api_lookup && draftedPlayers.has(player.player_api_lookup)) {
+      return true;
+    }
+    
+    // Check by fullName as last resort
+    if (player.fullName && draftedPlayers.has(player.fullName)) {
+      return true;
+    }
+    
+    return false;
   };
 
   // Handle player selection
   const handleSelectPlayer = (player) => {
     // Store the selected player for drafting
     setSelectedPlayer(player);
+    
+    // Reset roster slot
+    setSelectedRosterSlot('');
+    
+    // Log eligible positions for debugging
+    const positions = getPlayerEligiblePositions(player);
+    console.log(`Player eligible positions: ${positions.join(', ') || 'None'}`);
+    
     // Clear search results after selection
     setSearchResults([]);
     setSearchTerm('');
+  };
+
+  // Render roster slot options based on the player's eligible positions
+  const renderRosterSlotOptions = () => {
+    if (!selectedPlayer || !selectedTeam) return null;
+    
+    // Get eligible positions for this player
+    const eligiblePositions = getPlayerEligiblePositions(selectedPlayer);
+    
+    // Get filled slots for the selected team
+    const teamFilledSlots = filledRosterSlots[selectedTeam] || new Set();
+    
+    // Determine if player is a pitcher
+    const isPitcher = eligiblePositions.includes('P');
+    
+    return (
+      <>
+        {/* Position slots based on eligibility */}
+        {eligiblePositions.includes('P') && (
+          <>
+            {!teamFilledSlots.has('P 1') && <option value="P 1">P 1</option>}
+            {!teamFilledSlots.has('P 2') && <option value="P 2">P 2</option>}
+            {!teamFilledSlots.has('P 3') && <option value="P 3">P 3</option>}
+            {!teamFilledSlots.has('P 4') && <option value="P 4">P 4</option>}
+            {!teamFilledSlots.has('P 5') && <option value="P 5">P 5</option>}
+            {!teamFilledSlots.has('P 6') && <option value="P 6">P 6</option>}
+            {!teamFilledSlots.has('P 7') && <option value="P 7">P 7</option>}
+          </>
+        )}
+        
+        {eligiblePositions.includes('C') && !teamFilledSlots.has('C') && <option value="C">C</option>}
+        {eligiblePositions.includes('1B') && !teamFilledSlots.has('1B') && <option value="1B">1B</option>}
+        {eligiblePositions.includes('2B') && !teamFilledSlots.has('2B') && <option value="2B">2B</option>}
+        {eligiblePositions.includes('3B') && !teamFilledSlots.has('3B') && <option value="3B">3B</option>}
+        {eligiblePositions.includes('SS') && !teamFilledSlots.has('SS') && <option value="SS">SS</option>}
+        
+        {(eligiblePositions.includes('OF') || 
+          eligiblePositions.includes('LF') || 
+          eligiblePositions.includes('CF') || 
+          eligiblePositions.includes('RF')) && (
+          <>
+            {!teamFilledSlots.has('OF 1') && <option value="OF 1">OF 1</option>}
+            {!teamFilledSlots.has('OF 2') && <option value="OF 2">OF 2</option>}
+            {!teamFilledSlots.has('OF 3') && <option value="OF 3">OF 3</option>}
+          </>
+        )}
+        
+        {/* Utility slots available for all non-pitchers */}
+        {!isPitcher && (
+          <>
+            {!teamFilledSlots.has('U 1') && <option value="U 1">U 1</option>}
+            {!teamFilledSlots.has('U 2') && <option value="U 2">U 2</option>}
+            {!teamFilledSlots.has('U 3') && <option value="U 3">U 3</option>}
+          </>
+        )}
+        
+        {/* Taxi squad available for all players */}
+        {!teamFilledSlots.has('Taxi') && <option value="Taxi">Taxi Squad</option>}
+      </>
+    );
   };
 
   // Handle draft pick
@@ -133,12 +389,20 @@ const DraftBoard = () => {
       
       // For player_api_lookup, use the most specific identifier available
       const playerLookup = selectedPlayer.player_api_lookup || 
-                          selectedPlayer.name || 
+                          selectedPlayer.id || 
+                          selectedPlayer.player_id || 
                           selectedPlayer.fullName || 
+                          selectedPlayer.name || 
                           `${selectedPlayer.player_first_name || ''} ${selectedPlayer.player_last_name || ''}`.trim();
       
       if (!playerLookup) {
         alert("Error: Unable to identify selected player.");
+        return;
+      }
+      
+      // Check if roster slot is already filled
+      if (filledRosterSlots[selectedTeam] && filledRosterSlots[selectedTeam].has(selectedRosterSlot)) {
+        alert(`Error: Roster slot ${selectedRosterSlot} is already filled for this team.`);
         return;
       }
       
@@ -157,6 +421,9 @@ const DraftBoard = () => {
       // Refresh draft picks after successful draft
       const updatedPicks = await getDraftPicks();
       setDraftPicks(updatedPicks);
+      
+      // Update drafted players and filled roster slots
+      processExistingPicks(updatedPicks, teams);
       
       // Reset selections
       setSelectedPlayer(null);
@@ -305,6 +572,9 @@ const DraftBoard = () => {
               <div className="search-results">
                 <h4>Search Results ({searchResults.length})</h4>
                 {searchResults.map((player, index) => {
+                  // Check if player is already drafted
+                  const drafted = isPlayerDrafted(player);
+                  
                   // Get player name from the available fields
                   const playerName = player.fullName || player.name || 
                     `${player.player_first_name || ''} ${player.player_last_name || ''}`.trim();
@@ -325,10 +595,13 @@ const DraftBoard = () => {
                   return (
                     <div 
                       key={`search-result-${player.id || player.player_id || index}`} 
-                      className={`search-result-item ${sourceClass}`}
+                      className={`search-result-item ${sourceClass} ${drafted ? 'already-drafted' : ''}`}
                       onClick={() => handleSelectPlayer(player)}
                     >
-                      <div className="player-name">{playerName}</div>
+                      <div className="player-name">
+                        {playerName} 
+                        {drafted && <span className="drafted-indicator" style={{color: 'red'}}> (ALREADY DRAFTED)</span>}
+                      </div>
                       <div className="player-details">
                         <span className="player-position">{position}</span>
                         {teamName && <span className="player-team"> | {teamName}</span>}
@@ -355,6 +628,7 @@ const DraftBoard = () => {
                   {selectedPlayer.fullName || selectedPlayer.name || 
                    `${selectedPlayer.player_first_name || ''} ${selectedPlayer.player_last_name || ''}`.trim() ||
                    'Unknown Player'}
+                   {isPlayerDrafted(selectedPlayer) && <span className="drafted-indicator" style={{color: 'red'}}> (ALREADY DRAFTED)</span>}
                 </div>
                 <div className="player-details">
                   <div>Position: {selectedPlayer.position || 
@@ -367,66 +641,32 @@ const DraftBoard = () => {
                   {selectedPlayer.throws && <div>Throws: {selectedPlayer.throws}</div>}
                   {selectedPlayer.id && <div>Player ID: {selectedPlayer.id || selectedPlayer.player_id}</div>}
                 </div>
-                
-                <div className="form-group" style={{ marginTop: '1rem' }}>
-                  <label htmlFor="roster-slot-select">Select Roster Slot:</label>
-                  <select 
-                    id="roster-slot-select"
-                    value={selectedRosterSlot}
-                    onChange={(e) => setSelectedRosterSlot(e.target.value)}
-                    className="roster-slot-select"
-                  >
-                    <option value="">-- Select Roster Slot --</option>
-                    {/* Show appropriate slots based on player position */}
-                    {(selectedPlayer.position === 'P' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'P')) && (
-                      <>
-                        <option value="P 1">P 1</option>
-                        <option value="P 2">P 2</option>
-                        <option value="P 3">P 3</option>
-                        <option value="P 4">P 4</option>
-                        <option value="P 5">P 5</option>
-                        <option value="P 6">P 6</option>
-                        <option value="P 7">P 7</option>
-                      </>
-                    )}
-                    {(selectedPlayer.position === 'C' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'C')) && 
-                      <option value="C">C</option>
-                    }
-                    {(selectedPlayer.position === '1B' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === '1B')) && 
-                      <option value="1B">1B</option>
-                    }
-                    {(selectedPlayer.position === '2B' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === '2B')) && 
-                      <option value="2B">2B</option>
-                    }
-                    {(selectedPlayer.position === '3B' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === '3B')) && 
-                      <option value="3B">3B</option>
-                    }
-                    {(selectedPlayer.position === 'SS' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'SS')) && 
-                      <option value="SS">SS</option>
-                    }
-                    {(selectedPlayer.position === 'OF' || 
-                      (selectedPlayer.primaryPosition && selectedPlayer.primaryPosition.abbreviation === 'OF') ||
-                      (selectedPlayer.primaryPosition && ['LF', 'CF', 'RF'].includes(selectedPlayer.primaryPosition.abbreviation))) && (
-                      <>
-                        <option value="OF 1">OF 1</option>
-                        <option value="OF 2">OF 2</option>
-                        <option value="OF 3">OF 3</option>
-                      </>
-                    )}
-                    {/* Utility slots available for any position */}
-                    <option value="U 1">U 1</option>
-                    <option value="U 2">U 2</option>
-                    <option value="U 3">U 3</option>
-                    {/* Taxi squad option */}
-                    <option value="Taxi">Taxi Squad</option>
-                  </select>
+
+                <div className="player-eligibility" style={{ marginTop: '0.5rem' }}>
+                  <div className="info-label">Eligible Positions:</div>
+                  <div className="info-value">
+                    {getPlayerEligiblePositions(selectedPlayer).join(', ') || 'None'}
+                  </div>
                 </div>
+                
+                {!isPlayerDrafted(selectedPlayer) ? (
+                  <div className="form-group" style={{ marginTop: '1rem' }}>
+                    <label htmlFor="roster-slot-select">Select Roster Slot:</label>
+                    <select 
+                      id="roster-slot-select"
+                      value={selectedRosterSlot}
+                      onChange={(e) => setSelectedRosterSlot(e.target.value)}
+                      className="roster-slot-select"
+                    >
+                      <option value="">-- Select Roster Slot --</option>
+                      {renderRosterSlotOptions()}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="already-drafted-warning" style={{ marginTop: '1rem', color: 'red' }}>
+                    This player has already been drafted and cannot be selected again.
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -434,7 +674,12 @@ const DraftBoard = () => {
           <button 
             className="make-pick-button"
             onClick={handleMakePick}
-            disabled={!selectedTeam || !selectedPlayer || !selectedRosterSlot}
+            disabled={
+              !selectedTeam || 
+              !selectedPlayer || 
+              !selectedRosterSlot || 
+              isPlayerDrafted(selectedPlayer)
+            }
           >
             Make Selection
           </button>
