@@ -24,9 +24,9 @@ export const searchPlayersByName = async (query) => {
     
     // If no results or error from MLB, use our database as fallback
     if (!response.data.people || response.data.people.length === 0) {
-      // Fallback to our database search
+      // Fallback to our database search - use the correct port 3001
       console.log(`No MLB results for "${query}", falling back to database search`);
-      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
+      const backendResponse = await axios.get(`http://localhost:3001/api/players/search?term=${encodeURIComponent(query)}`);
       console.log('Database search results:', backendResponse.data);
       return backendResponse.data;
     }
@@ -44,10 +44,10 @@ export const searchPlayersByName = async (query) => {
   } catch (error) {
     console.error(`Error searching for players with query "${query}":`, error);
     
-    // Fallback to our database search on error
+    // Fallback to our database search on error - use the correct port 3001
     try {
       console.log(`MLB API error for "${query}", falling back to database search`);
-      const backendResponse = await axios.get(`/api/players/search?term=${encodeURIComponent(query)}`);
+      const backendResponse = await axios.get(`http://localhost:3001/api/players/search?term=${encodeURIComponent(query)}`);
       console.log('Database fallback results:', backendResponse.data);
       return backendResponse.data;
     } catch (fallbackError) {
@@ -133,7 +133,7 @@ export const getPlayerDetails = async (playerId) => {
 export const getMLBTeams = async () => {
   try {
     // Use our database for teams instead of MLB API
-    const response = await axios.get('/api/teams?currentYear=true');
+    const response = await axios.get('http://localhost:3001/api/teams?currentYear=true');
     return response.data;
   } catch (error) {
     console.error('Error fetching MLB teams:', error);

@@ -157,13 +157,20 @@ app.get('/api/players/search', async (req, res) => {
       return res.json([]);
     }
     
+    console.log(`Searching for players with term: "${term}"`);
+    
+    // Use a more flexible search query with ILIKE for partial matching
     const result = await pool.query(
       `SELECT * FROM ${schemaPrefix}.fl_players 
        WHERE player_first_name ILIKE $1 
        OR player_last_name ILIKE $1
-       OR player_api_lookup ILIKE $1`,
+       OR player_api_lookup ILIKE $1
+       OR CONCAT(player_first_name, ' ', player_last_name) ILIKE $1
+       LIMIT 20`,
       [`%${term}%`]
     );
+    
+    console.log(`Found ${result.rows.length} players matching "${term}"`);
     
     // Map the boolean position flags to a position string for the API
     const players = result.rows.map(player => {
