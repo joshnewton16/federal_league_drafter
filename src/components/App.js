@@ -6,7 +6,7 @@ import LeaderBoard from './LeaderBoard'; // Import the new component
 import { getTeams } from '../api/database';
 
 function AppComponent() {
-  const [activeTab, setActiveTab] = useState('draft');
+  const [activeTab, setActiveTab] = useState('leaderboard');
   const [teams, setTeams] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,7 +61,7 @@ function AppComponent() {
       case 'teams':
         return <TeamView teams={teams} />;
       default:
-        return <DraftBoard />;
+        return <LeaderBoard />;
     }
   };
 
