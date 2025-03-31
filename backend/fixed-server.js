@@ -844,3 +844,35 @@ app.get('/api/mlb/affiliates/:teamId/players', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch minor league players' });
   }
 });
+
+// Get LeaderBoard
+app.get('/api/leaderBoard', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM ${schemaPrefix}.v_leader_board`);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'LeaderBoard not found' });
+    }
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error(`Error fetching LeaderBoard:`, error);
+    res.status(500).json({ error: 'Failed to fetch LeaderBoard' });
+  }
+});
+
+// Get LeagueDates
+app.get('/api/leagueDates', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT x.* FROM federal_league.fl_league_dates x join federal_league.fl_year y using (year_id) where y.current_yr order by sort_order;`);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'leagueDates not found' });
+    }
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error(`Error fetching leagueDates:`, error);
+    res.status(500).json({ error: 'Failed to fetch leagueDates' });
+  }
+});

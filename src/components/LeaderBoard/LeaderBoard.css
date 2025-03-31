@@ -1,0 +1,149 @@
+.leaderboard-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .leaderboard-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid rgba(78, 138, 77, 0.5);
+    padding-bottom: 10px;
+  }
+  
+  .leaderboard-table-container {
+    overflow-x: auto;
+  }
+  
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+  }
+  
+  .leaderboard-table th, 
+  .leaderboard-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .leaderboard-table th {
+    background-color: rgba(78, 138, 77, 0.9);
+    color: white;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  
+  .leaderboard-table tr:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .rank-cell {
+    text-align: center;
+    font-weight: bold;
+    width: 60px;
+  }
+  
+  .team-name-cell {
+    font-weight: 500;
+  }
+  
+  .points-cell {
+    text-align: right;
+    font-weight: bold;
+    width: 80px;
+  }
+  
+  /* Highlight top 3 teams */
+  .playoff-position {
+    background-color: rgba(78, 138, 77, 0.1);
+  }
+  
+  .playoff-position .rank-cell {
+    position: relative;
+  }
+  
+  .playoff-position:nth-child(1) .rank-cell {
+    color: gold;
+  }
+  
+  .playoff-position:nth-child(2) .rank-cell {
+    color: silver;
+  }
+  
+  .playoff-position:nth-child(3) .rank-cell {
+    color: #cd7f32; /* bronze */
+  }
+  
+  /* Legend & footer */
+  .leaderboard-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .legend {
+    display: flex;
+    align-items: center;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+  }
+  
+  .playoff-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: rgba(78, 138, 77, 0.2);
+    margin-right: 5px;
+    border-radius: 2px;
+  }
+  
+  .last-updated {
+    font-style: italic;
+  }
+  
+  /* Loading and error states */
+  .loading-indicator,
+  .error-message {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #666;
+  }
+  
+  .error-message {
+    color: #d32f2f;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 600px) {
+    .leaderboard-table th, 
+    .leaderboard-table td {
+      padding: 10px;
+    }
+    
+    .rank-cell {
+      width: 40px;
+    }
+    
+    .points-cell {
+      width: 60px;
+    }
+    
+    .leaderboard-footer {
+      flex-direction: column;
+      gap: 10px;
+    }
+  }

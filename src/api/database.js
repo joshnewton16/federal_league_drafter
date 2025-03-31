@@ -53,6 +53,28 @@ export const getDraftPicks = async (yearId = null) => {
   }
 };
 
+// Draft picks operations
+export const getLeaderBoard = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/leaderBoard`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting leaderBoard:', error);
+    throw error;
+  }
+};
+
+// Draft picks operations
+export const getLeagueDates = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/leagueDates`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting leagueDates:', error);
+    throw error;
+  }
+};
+
 export const addDraftPick = async (pickData) => {
   try {
     // Format player_api_lookup with curly braces and quotation marks if it doesn't already have them

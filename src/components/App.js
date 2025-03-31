@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DraftBoard from './DraftBoard';
 import PlayerSearch from './PlayerSearch';
 import TeamView from './TeamView';
+import LeaderBoard from './LeaderBoard'; // Import the new component
 import { getTeams } from '../api/database';
 
 function AppComponent() {
@@ -55,8 +56,8 @@ function AppComponent() {
     switch (activeTab) {
       case 'draft':
         return <DraftBoard />;
-      case 'search':
-        return <PlayerSearch />;
+      case 'leaderboard':
+        return <LeaderBoard />;
       case 'teams':
         return <TeamView teams={teams} />;
       default:
