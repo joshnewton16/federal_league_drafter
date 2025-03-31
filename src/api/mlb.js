@@ -137,11 +137,14 @@ export const getPlayerDetails = async (playerId) => {
 };
 
 // Simplified version of team functions
-export const getMLBTeams = async () => {
+export const getMlbTeams = async () => {
   try {
-    // Use our database for teams instead of MLB API
-    const response = await axios.get('http://localhost:3001/api/teams?currentYear=true');
-    return response.data;
+    const response = await fetch(`http://localhost:3001/api/mlb/teams`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch MLB teams');
+    }
+    const data = await response.json();
+    return data.teams || [];
   } catch (error) {
     console.error('Error fetching MLB teams:', error);
     return [];
@@ -197,6 +200,20 @@ export const getPlayerStats = async (playerId, statGroup = 'hitting', season = n
     }
   } catch (error) {
     console.error(`Error fetching ${statGroup} stats for player ${playerId}:`, error);
+    return [];
+  }
+};
+
+export const searchMinorLeaguePlayers = async (mlbTeamId) => {
+  try {
+    const response = await fetch(`http://localhost:3001/api/mlb/affiliates/${mlbTeamId}/players`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch minor league players');
+    }
+    const data = await response.json();
+    return data.players || [];
+  } catch (error) {
+    console.error('Error fetching minor league players:', error);
     return [];
   }
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDraftPicks, addDraftPick, getTeams, getCurrentYear, getTeamRoster } from '../api/database';
-import { searchPlayersByName } from '../api/mlb';
+import { searchPlayersByName, getMlbTeams, searchMinorLeaguePlayers } from '../api/mlb';
 
 const DraftBoard = () => {
   // State declarations
@@ -16,6 +16,10 @@ const DraftBoard = () => {
   const [currentYear, setCurrentYear] = useState(null);
   const [draftedPlayers, setDraftedPlayers] = useState(new Set());
   const [filledRosterSlots, setFilledRosterSlots] = useState({});
+  const [searchMode, setSearchMode] = useState('mlb'); // 'mlb' or 'milb'
+  const [mlbTeams, setMlbTeams] = useState([]);
+  const [selectedMlbTeam, setSelectedMlbTeam] = useState('');
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
 
   // Load data when component mounts
   useEffect(() => {
@@ -68,6 +72,7 @@ const DraftBoard = () => {
   
     loadData();
   }, []);
+
   useEffect(() => {
     console.log('Team selection changed to:', selectedTeam);
     
@@ -109,6 +114,30 @@ const DraftBoard = () => {
     
     loadTeamRoster();
   }, [selectedTeam]); // Only depend on selectedTeam
+
+  useEffect(() => {
+    // Only load MLB teams if in milb search mode
+    if (searchMode === 'milb') {
+      const loadMlbTeams = async () => {
+        setIsLoadingTeams(true);
+        try {
+          const teams = await getMlbTeams();
+
+          // Sort teams alphabetically by name
+          const sortedTeams = [...teams].sort((a, b) => 
+            a.name.localeCompare(b.name)
+          );
+          setMlbTeams(teams);
+        } catch (error) {
+          console.error('Error loading MLB teams:', error);
+        } finally {
+          setIsLoadingTeams(false);
+        }
+      };
+      
+      loadMlbTeams();
+    }
+  }, [searchMode]);
   
   // Process existing picks to track drafted players and filled roster slots
   const processExistingPicks = (picks, teamsList) => {
@@ -187,28 +216,55 @@ const DraftBoard = () => {
 
   // Handle player search
   const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
+    if (searchMode === 'milb' && !selectedMlbTeam) {
+      alert('Please select an MLB team to search their minor league players');
+      return;
+    }
+    
+    if (searchMode === 'mlb' && !searchTerm.trim()) {
+      return;
+    }
     
     setIsSearching(true);
     setSearchResults([]);
     
     try {
-      // Search for players
-      const players = await searchPlayersByName(searchTerm);
+      let players = [];
+      
+      if (searchMode === 'mlb') {
+        // Use existing search logic for MLB players
+        players = await searchPlayersByName(searchTerm);
+      } else {
+        // Search minor league players by MLB parent team
+        players = await searchMinorLeaguePlayers(selectedMlbTeam);
+        
+        // Optionally filter by name if searchTerm is provided
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase();
+          players = players.filter(player => 
+            player.fullName.toLowerCase().includes(term)
+          );
+        }
+      }
       
       if (players && players.length > 0) {
-        // Filter out MLB players if database players are available
-        const dbPlayers = players.filter(player => player.source === 'Database');
-        
-        if (dbPlayers.length > 0) {
-          console.log('Found players in database - using only database results');
-          setSearchResults(dbPlayers);
+        // Filter out MLB players if database players are available (only in MLB mode)
+        if (searchMode === 'mlb') {
+          const dbPlayers = players.filter(player => player.source === 'Database');
+          
+          if (dbPlayers.length > 0) {
+            console.log('Found players in database - using only database results');
+            setSearchResults(dbPlayers);
+          } else {
+            console.log('No database players found - using MLB API results');
+            setSearchResults(players);
+          }
         } else {
-          console.log('No database players found - using MLB API results');
+          // In MiLB mode, show all results
           setSearchResults(players);
         }
       } else {
-        console.log('No players found for search term:', searchTerm);
+        console.log('No players found for search criteria');
       }
     } catch (error) {
       console.error('Error searching players:', error);
@@ -550,6 +606,50 @@ const DraftBoard = () => {
           
           <div className="form-group">
             <label htmlFor="player-search">Search Player:</label>
+            <div className="search-mode-toggle">
+              <div className="search-mode-option">
+                <input
+                  type="radio"
+                  id="mlb-search"
+                  name="search-mode"
+                  value="mlb"
+                  checked={searchMode === 'mlb'}
+                  onChange={() => setSearchMode('mlb')}
+                />
+                <label htmlFor="mlb-search">MLB Players</label>
+              </div>
+              <div className="search-mode-option">
+                <input
+                  type="radio"
+                  id="milb-search"
+                  name="search-mode"
+                  value="milb"
+                  checked={searchMode === 'milb'}
+                  onChange={() => setSearchMode('milb')}
+                />
+                <label htmlFor="milb-search">Minor League Players</label>
+              </div>
+            </div>
+
+            {searchMode === 'milb' && (
+              <div className="mlb-team-selector">
+                <label htmlFor="mlb-team-select">Select MLB Team:</label>
+                <select
+                  id="mlb-team-select"
+                  value={selectedMlbTeam}
+                  onChange={(e) => setSelectedMlbTeam(e.target.value)}
+                  disabled={isLoadingTeams}
+                >
+                  <option value="">-- Select MLB Team --</option>
+                  {mlbTeams.map(team => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+                {isLoadingTeams && <span className="loading-indicator">Loading teams...</span>}
+              </div>
+            )}
             <div className="search-container">
               <input 
                 id="player-search"

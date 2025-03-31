@@ -753,3 +753,93 @@ app.get('/api/team-roster/:teamId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch team roster' });
   }
 });
+
+// Get all MLB teams
+app.get('/api/mlb/teams', async (req, res) => {
+  try {
+    const response = await axios.get('https://statsapi.mlb.com/api/v1/teams', {
+      params: {
+        sportId: 1, // 1 = MLB
+        season: new Date().getFullYear()
+      },
+      headers: {
+        'User-Agent': 'Fantasy Baseball Draft App'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching MLB teams:', error.message);
+    res.status(500).json({ error: 'Failed to fetch MLB teams' });
+  }
+});
+
+// Get players from minor league affiliates of an MLB team
+app.get('/api/mlb/affiliates/:teamId/players', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    
+    // First get the team's affiliates
+    const affiliatesResponse = await axios.get(`https://statsapi.mlb.com/api/v1/teams/${teamId}/affiliates`, {
+      headers: {
+        'User-Agent': 'Fantasy Baseball Draft App'
+      }
+    });
+    
+    const affiliateTeams = affiliatesResponse.data.teams || [];
+    const affiliateIds = affiliateTeams.map(team => team.id);
+    
+    // Get players from each affiliate team
+    const playerPromises = affiliateIds.map(async (affiliateId) => {
+      const rosterResponse = await axios.get(`https://statsapi.mlb.com/api/v1/teams/${affiliateId}/roster`, {
+        params: {
+          rosterType: 'fullRoster'
+        },
+        headers: {
+          'User-Agent': 'Fantasy Baseball Draft App'
+        }
+      });
+      
+      // Return roster with team info
+      const teamInfo = affiliateTeams.find(team => team.id === affiliateId);
+      return {
+        teamId: affiliateId,
+        teamName: teamInfo ? teamInfo.name : 'Unknown Affiliate',
+        teamLevel: teamInfo ? teamInfo.parentOrgLevel : 'Unknown',
+        roster: rosterResponse.data.roster || []
+      };
+    });
+    
+    const allRosters = await Promise.all(playerPromises);
+    
+    // Combine and format all players
+    const allPlayers = [];
+    allRosters.forEach(team => {
+      team.roster.forEach(player => {
+        allPlayers.push({
+          id: player.person.id,
+          fullName: player.person.fullName,
+          position: player.position.abbreviation,
+          mlbTeam: team.teamName,
+          level: team.teamLevel,
+          jerseyNumber: player.jerseyNumber,
+          status: player.status ? player.status.description : '',
+          player_api_lookup: `{"${player.person.fullName}"}`,
+          source: 'MLB MiLB API'
+        });
+      });
+    });
+    
+    res.json({ 
+      players: allPlayers,
+      affiliates: affiliateTeams.map(team => ({
+        id: team.id,
+        name: team.name,
+        level: team.parentOrgLevel
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching minor league players:', error.message);
+    res.status(500).json({ error: 'Failed to fetch minor league players' });
+  }
+});
