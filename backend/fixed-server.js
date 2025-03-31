@@ -117,15 +117,16 @@ app.get('/api/currentYear', async (req, res) => {
 app.get('/api/draftResults', async (req, res) => {
   try {
     const { yearId } = req.query;
-    let query = `SELECT * FROM ${schemaPrefix}.fl_draft_results`;
+    let query = `SELECT * FROM ${schemaPrefix}.v_show_draft_results`;
     
-    if (yearId) {
-      query += ` WHERE year_id = ${yearId}`;
-    } else {
-      // If no year specified, get current year
-      query += ` WHERE year_id IN (SELECT year_id FROM ${schemaPrefix}.fl_year WHERE current_yr = true)`;
-    }
+    //if (yearId) {
+    //  query += ` WHERE year_id = ${yearId}`;
+    //} else {
+    //  // If no year specified, get current year
+     // query += ` WHERE year_id IN (SELECT year_id FROM ${schemaPrefix}.fl_year WHERE current_yr = true)`;
+    //}
     
+    console.log(query)
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (error) {

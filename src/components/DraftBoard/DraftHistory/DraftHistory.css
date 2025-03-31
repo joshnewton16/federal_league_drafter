@@ -1,0 +1,186 @@
+/* DraftHistory.css */
+
+.draft-history {
+  width: 100%;
+}
+
+/* Tree structure styling */
+.draft-tree-item {
+  margin-bottom: 10px;
+}
+
+.tree-header {
+  display: flex;
+  align-items: center;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tree-header:hover {
+  background-color: #dee2e6;
+}
+
+.tree-header h3 {
+  margin: 0;
+  flex-grow: 1;
+}
+
+.tree-header .expand-icon {
+  margin-right: 10px;
+  transition: transform 0.3s;
+}
+
+.tree-header .expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-content {
+  display: none;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0 0 4px 4px;
+  margin-top: -1px;
+}
+
+.tree-content.expanded {
+  display: block;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Pick styling */
+.pick-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pick-item {
+  display: flex;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+}
+
+.pick-item:last-child {
+  border-bottom: none;
+}
+
+.pick-number {
+  min-width: 40px;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.pick-team {
+  min-width: 150px;
+  margin-right: 15px;
+  font-weight: 500;
+}
+
+.pick-player {
+  flex-grow: 1;
+}
+
+.pick-player-name {
+  font-weight: 500;
+}
+
+.pick-player-position {
+  color: #6c757d;
+  margin-left: 8px;
+}
+
+.pick-empty {
+  color: #dc3545;
+  font-style: italic;
+}
+
+/* Highlight team on the clock */
+.on-the-clock {
+  background-color: #fff3cd;
+}
+
+/* Round alternating colors */
+.round-even .pick-item {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Team view specific styles */
+.team-header {
+  display: flex;
+  align-items: center;
+}
+
+.team-logo {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+}
+
+/* Roster by position styling */
+.team-roster {
+  margin-top: 20px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 15px;
+}
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.position-group {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.position-group h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.position-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.position-player {
+  padding: 4px 0;
+  font-size: 0.9em;
+}
+
+.player-slot {
+  font-size: 0.85em;
+  color: #6c757d;
+  margin-left: 5px;
+}
+
+/* Additional pick styles */
+.pick-round {
+  min-width: 80px;
+  margin-right: 10px;
+  color: #6c757d;
+}
+
+.no-picks {
+  font-style: italic;
+  color: #6c757d;
+  padding: 10px;
+  text-align: center;
+}
