@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getLeaderBoard } from '../../api/database';
+import { getLeaderBoard, getLeagueDates } from '../../api/database';
 import './LeaderBoard.css';
 
 const LeaderBoard = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leagueDateData, setLeagueDateData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,6 +32,25 @@ const LeaderBoard = () => {
     fetchLeaderboard();
   }, []);
 
+  useEffect(() => {
+    const fetchLeagueDates = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getLeagueDates();
+        
+        setLeagueDateData(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching leaguedate data:', err);
+        setError('Failed to load leaguedate data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeagueDates();
+  }, []);
+
   // Render loading state
   if (isLoading) {
     return (
@@ -55,7 +75,7 @@ const LeaderBoard = () => {
     <div className="leaderboard-container">
       <table>
         <tbody>
-          <td width="20%">
+          <td width="20%" valign="top">
             <h2>League Standings</h2>
             
             <div className="leaderboard-table-container">
@@ -94,10 +114,23 @@ const LeaderBoard = () => {
               </div>
             </div>
           </td>
-          <td width="60%">
+          <td width="60%" valign="top">
+          <h2>Important League Dates</h2>
 
+          <div className="leaderboard-table-container">
+              <table className="leaderboard-table">
+                <tbody>
+                  {leagueDateData.map((dates, index) => (
+                    <tr>
+                      <td className="team-name-cell">{dates.league_date_text}</td>
+                      <td className="points-cell">{dates.league_date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </td>
-          <td width="20%">
+          <td width="20%" valign="top">
             <div>News from around the MLB</div>
             <iframe width="250" height="750" class="rssdog" src="https://www.rssdog.com/index.php?url=https%3A%2F%2Fwww.espn.com%2Fespn%2Frss%2Fmlb%2Fnews&amp;mode=html&amp;showonly=&amp;maxitems=10&amp;showdescs=1&amp;desctrim=0&amp;descmax=0&amp;tabwidth=100%25&amp;linktarget=_blank&amp;bordercol=%23d4d0c8&amp;headbgcol=%23999999&amp;headtxtcol=%23ffffff&amp;titlebgcol=%23f1eded&amp;titletxtcol=%23000000&amp;itembgcol=%23ffffff&amp;itemtxtcol=%23000000&amp;ctl=0"></iframe>
           </td>
