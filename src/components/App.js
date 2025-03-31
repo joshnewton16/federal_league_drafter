@@ -9,6 +9,28 @@ function AppComponent() {
   const [teams, setTeams] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const styles = {
+    tabContainer: {
+      display: 'flex',
+      gap: '10px'
+    },
+    tab: {
+      padding: '10px 15px',
+      backgroundColor: '#f0f0f0',
+      color: '#333',
+      border: 'none',
+      borderRadius: '4px',
+      fontSize: '16px',
+      fontWeight: '500',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease'
+    },
+    activeTab: {
+      backgroundColor: '#3c6e3b', // A shade that matches your header
+      color: 'white'
+    }
+  };
+
   useEffect(() => {
     // Load initial data
     const loadData = async () => {
@@ -46,25 +68,33 @@ function AppComponent() {
     <div className="app">
       <header>
         <div className="container">
-          <h1>Fantasy Baseball Draft Tool</h1>
           <nav>
-            <button 
-              className={`tab ${activeTab === 'draft' ? 'active' : ''}`}
-              onClick={() => setActiveTab('draft')}
+          <button 
+              style={{
+                ...styles.tab, 
+                ...(activeTab === 'leaderboard' ? styles.activeTab : {})
+              }}
+              onClick={() => setActiveTab('leaderboard')}
             >
-              Draft Board
+              League Leader Board
             </button>
             <button 
-              className={`tab ${activeTab === 'search' ? 'active' : ''}`}
-              onClick={() => setActiveTab('search')}
-            >
-              Player Search
-            </button>
-            <button 
-              className={`tab ${activeTab === 'teams' ? 'active' : ''}`}
+              style={{
+                ...styles.tab, 
+                ...(activeTab === 'teams' ? styles.activeTab : {})
+              }}
               onClick={() => setActiveTab('teams')}
             >
               Teams
+            </button>
+            <button 
+              style={{
+                ...styles.tab, 
+                ...(activeTab === 'draft' ? styles.activeTab : {})
+              }}
+              onClick={() => setActiveTab('draft')}
+            >
+              Draft Board
             </button>
           </nav>
         </div>
