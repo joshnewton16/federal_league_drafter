@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DraftBoard from './DraftBoard';
-import PlayerSearch from './PlayerSearch';
 import TeamView from './TeamView';
-import LeaderBoard from './LeaderBoard'; // Import the new component
+import LeaderBoard from './LeaderBoard';
 import { getTeams } from '../api/database';
 
 function AppComponent() {
@@ -27,7 +26,7 @@ function AppComponent() {
       transition: 'all 0.2s ease'
     },
     activeTab: {
-      backgroundColor: '#3c6e3b', // A shade that matches your header
+      backgroundColor: '#3c6e3b',
       color: 'white'
     }
   };
@@ -36,7 +35,9 @@ function AppComponent() {
     // Load initial data
     const loadData = async () => {
       try {
+        console.log("Fetching teams data...");
         const teamsData = await getTeams();
+        console.log("Teams data received:", teamsData);
         setTeams(teamsData);
         setIsLoading(false);
       } catch (error) {
@@ -53,12 +54,15 @@ function AppComponent() {
       return <div className="loading">Loading data...</div>;
     }
 
+    console.log(`Rendering tab: ${activeTab}, teams count: ${teams.length}`);
+    
     switch (activeTab) {
       case 'draft':
         return <DraftBoard />;
       case 'leaderboard':
         return <LeaderBoard />;
       case 'teams':
+        // Make sure we're passing teams properly
         return <TeamView teams={teams} />;
       default:
         return <LeaderBoard />;
@@ -70,7 +74,7 @@ function AppComponent() {
       <header>
         <div className="container">
           <nav>
-          <button 
+            <button 
               style={{
                 ...styles.tab, 
                 ...(activeTab === 'leaderboard' ? styles.activeTab : {})

@@ -1,0 +1,100 @@
+.team-view-container {
+  padding: 20px 0;
+}
+
+.team-view-container h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.team-view-content {
+  display: flex;
+  gap: 20px;
+}
+
+/* Team List Styles */
+.team-list-container {
+  width: 250px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.team-list-container h3 {
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+  color: #3c6e3b;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.team-list-item {
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.team-list-item:hover {
+  background-color: #e9ecef;
+}
+
+.team-list-item.selected {
+  background-color: #3c6e3b;
+  color: white;
+  font-weight: 500;
+}
+
+.no-teams-message {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Team Details Styles */
+.team-details-area {
+  flex: 1;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  min-height: 300px;
+}
+
+.team-select-prompt {
+  display: flex;
+  height: 100%;
+  min-height: 200px;
+  justify-content: center;
+  align-items: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.team-detail-content h3 {
+  color: #3c6e3b;
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+  .team-view-content {
+    flex-direction: column;
+  }
+  
+  .team-list-container {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}

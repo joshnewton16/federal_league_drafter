@@ -1,0 +1,39 @@
+.team-menu-container {
+    width: 100%;
+    max-width: 300px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-right: 20px;
+  }
+  
+  .team-menu-container h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+    color: #3c6e3b;
+  }
+  
+  .team-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .team-menu-item {
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .team-menu-item:hover {
+    background-color: #e9ecef;
+  }
+  
+  .team-menu-item.selected {
+    background-color: #3c6e3b;
+    color: white;
+    font-weight: 500;
+  }

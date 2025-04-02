@@ -1,9 +1,21 @@
-.leaderboard-container {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-bottom: 20px;
+  .leaderboard-table-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .leaderboard-container {
+    padding-left: 10px;
+    padding-right: 10px;
+    border: 1px solid hsl(0, 0%, 0%);
+  }
+
+  .leaderboard-container td {
+    padding-left: 10px;
+    padding-right: 10px;
+    border: 1px solid hsl(0, 0%, 0%);
   }
   
   .leaderboard-container h2 {
@@ -18,30 +30,40 @@
     overflow-x: auto;
   }
   
+  /* Table styling */
   .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 16px;
+    border: 1px solid #ddd;
   }
   
-  .leaderboard-table th, 
+  /* Cell styling */
   .leaderboard-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
   }
-  
+
+  /* Header styling (if you decide to add headers later) */
   .leaderboard-table th {
-    background-color: rgba(78, 138, 77, 0.9);
-    color: white;
-    font-weight: 500;
-    text-transform: uppercase;
-    font-size: 14px;
-    letter-spacing: 0.5px;
+    padding: 12px 15px;
+    background-color: #f2f2f2;
+    border: 1px solid #ddd;
+    font-weight: bold;
+    text-align: left;
   }
   
+  /* Alternating row colors */
+  .leaderboard-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  .leaderboard-table tr:nth-child(odd) {
+    background-color: #ffffff;
+  }
+
+  /* Hover effect (optional) */
   .leaderboard-table tr:hover {
-    background-color: #f5f5f5;
+    background-color: #e9e9e9;
   }
   
   .rank-cell {
@@ -50,14 +72,14 @@
     width: 60px;
   }
   
+  /* Specific cell styling */
   .team-name-cell {
-    font-weight: 500;
+    min-width: 200px;
   }
   
   .points-cell {
-    text-align: right;
+    text-align: center;
     font-weight: bold;
-    width: 80px;
   }
   
   /* Highlight top 3 teams */
@@ -147,3 +169,51 @@
       gap: 10px;
     }
   }
+
+  /* CSS for the RSS feed container */
+.rss-container {
+  width: 250px;
+  height: 750px;
+  overflow-y: auto;
+  border: 1px solid #d4d0c8;
+  font-family: Arial, sans-serif;
+}
+
+.rss-header {
+  background-color: #999999;
+  color: #ffffff;
+  padding: 10px;
+  font-weight: bold;
+}
+
+.rss-item {
+  border-bottom: 1px solid #f1eded;
+  padding: 10px;
+}
+
+.rss-item:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.rss-item:nth-child(even) {
+  background-color: #f1eded;
+}
+
+.rss-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.rss-title a {
+  color: #000000;
+  text-decoration: none;
+}
+
+.rss-title a:hover {
+  text-decoration: underline;
+}
+
+.rss-description {
+  font-size: 0.9em;
+  color: #000000;
+}

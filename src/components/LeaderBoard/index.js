@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getLeaderBoard, getLeagueDates } from '../../api/database';
+import MLBRssFeed from './MLBRssFeed'; // adjust path as needed
 import './LeaderBoard.css';
 
 const LeaderBoard = () => {
@@ -115,9 +116,9 @@ const LeaderBoard = () => {
             </div>
           </td>
           <td width="60%" valign="top">
-          <h2>Important League Dates</h2>
+            <h2>Important League Dates</h2>
 
-          <div className="leaderboard-table-container">
+            <div className="leaderboard-table-container">
               <table className="leaderboard-table">
                 <tbody>
                   {leagueDateData.map((dates, index) => (
@@ -132,7 +133,7 @@ const LeaderBoard = () => {
           </td>
           <td width="20%" valign="top">
             <div>News from around the MLB</div>
-            <iframe width="250" height="750" class="rssdog" src="https://www.rssdog.com/index.php?url=https%3A%2F%2Fwww.espn.com%2Fespn%2Frss%2Fmlb%2Fnews&amp;mode=html&amp;showonly=&amp;maxitems=10&amp;showdescs=1&amp;desctrim=0&amp;descmax=0&amp;tabwidth=100%25&amp;linktarget=_blank&amp;bordercol=%23d4d0c8&amp;headbgcol=%23999999&amp;headtxtcol=%23ffffff&amp;titlebgcol=%23f1eded&amp;titletxtcol=%23000000&amp;itembgcol=%23ffffff&amp;itemtxtcol=%23000000&amp;ctl=0"></iframe>
+            <MLBRssFeed />
           </td>
         </tbody>      
       </table>
