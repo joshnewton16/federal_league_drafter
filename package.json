@@ -4,16 +4,21 @@
     "description": "A utility for fantasy baseball draft data entry and management",
     "main": "src/index.js",
     "scripts": {
-      "start": "webpack serve --mode development --open",
       "build": "webpack --mode production",
-      "test": "jest"
+      "test": "jest",
+      "start:frontend": "webpack serve --mode development", 
+      "start:backend": "cd backend && node fixed-server.js",
+      "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+      "start:prod": "concurrently \"npm run start:backend\" \"npm run build && serve -s dist\""
     },
     "dependencies": {
       "axios": "^1.6.0",
       "firebase": "^10.5.0",
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
-      "react-tabs": "^6.0.2"
+      "react-tabs": "^6.0.2",
+      "concurrently": "^8.2.0",
+      "serve": "^14.2.1"
     },
     "devDependencies": {
       "@babel/core": "^7.23.2",
