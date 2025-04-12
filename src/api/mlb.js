@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use our backend as a proxy to the MLB Stats API
-const API_BASE_URL = 'http://localhost:3001/api/mlb';
+const API_BASE_URL = '/api/mlb';
 
 /**
  * Search for players by name
@@ -18,7 +18,7 @@ export const searchPlayersByName = async (query) => {
     console.log(`Searching for player: "${searchTerm}" using combined endpoint`);
     
     // Use the combined search endpoint
-    const response = await axios.get(`http://localhost:3001/api/player-search`, {
+    const response = await axios.get(`api/player-search`, {
       params: { term: searchTerm }
     });
     
@@ -139,7 +139,7 @@ export const getPlayerDetails = async (playerId) => {
 // Simplified version of team functions
 export const getMlbTeams = async () => {
   try {
-    const response = await fetch(`http://localhost:3001/api/mlb/teams`);
+    const response = await fetch(`/api/mlb/teams`);
     if (!response.ok) {
       throw new Error('Failed to fetch MLB teams');
     }
@@ -206,7 +206,7 @@ export const getPlayerStats = async (playerId, statGroup = 'hitting', season = n
 
 export const searchMinorLeaguePlayers = async (mlbTeamId) => {
   try {
-    const response = await fetch(`http://localhost:3001/api/mlb/affiliates/${mlbTeamId}/players`);
+    const response = await fetch(`/api/mlb/affiliates/${mlbTeamId}/players`);
     if (!response.ok) {
       throw new Error('Failed to fetch minor league players');
     }

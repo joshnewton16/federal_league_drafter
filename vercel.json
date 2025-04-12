@@ -1,0 +1,13 @@
+{
+    "version": 2,
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "env": {
+      "DATABASE_URL": "postgresql://federal_league_admin:jLriXmc4MNd8@ep-flat-paper-a5bp6umk.us-east-2.aws.neon.tech/federal_league?sslmode=require",
+      "DB_SCHEMA": "federal_league"
+    },
+    "routes": [
+      { "src": "/api/(.*)", "dest": "/api/$1" },
+      { "src": "/(.*)", "dest": "/index.html" }
+    ]
+  }

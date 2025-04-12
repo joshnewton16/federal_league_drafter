@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Base URL for your backend API that connects to PostgreSQL
-const API_BASE_URL = 'http://localhost:3001/api';
+//const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = '/api';
 
 // Teams operations
 export const getTeams = async (yearId = null) => {
