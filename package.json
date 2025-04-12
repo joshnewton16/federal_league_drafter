@@ -6,7 +6,7 @@
     "node": "18.x"
   },
   "scripts": {
-    "build": "npx webpack --mode production",
+    "build": "node ./node_modules/webpack/bin/webpack.js --mode production",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "webpack serve --mode development",
     "dev:backend": "node server-local.js",
