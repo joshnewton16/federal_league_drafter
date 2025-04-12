@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getDraftResults, getTeams, getCurrentYear } from '../../api/api-client';
-import './DraftBoard.css'; // Make sure this path is correct
+import './board.css';
 
 // Inline styles for more direct control
 const styles = {
