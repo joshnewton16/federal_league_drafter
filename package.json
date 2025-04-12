@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "webpack --mode production",
+    "build": "npx webpack --mode production",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "webpack serve --mode development",
     "dev:backend": "node server-local.js",
