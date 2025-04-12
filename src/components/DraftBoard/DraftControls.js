@@ -1,5 +1,5 @@
 import React from 'react';
-import { addDraftPick, getDraftPicks } from '../../api/database';
+import { draftPlayer, getDraftResults } from '../../api/api-client';
 
 const DraftControls = ({ 
   selectedTeam, 
@@ -53,11 +53,11 @@ const DraftControls = ({
       
       console.log("Drafting player with data:", pickData);
       
-      const result = await addDraftPick(pickData);
+      const result = await draftPlayer(pickData);
       console.log("Draft result:", result);
       
       // Refresh draft picks after successful draft
-      const updatedPicks = await getDraftPicks();
+      const updatedPicks = await getDraftResults();
       
       // Call the success handler with updated picks
       onDraftSuccess(updatedPicks);

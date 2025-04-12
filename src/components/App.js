@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DraftBoard from './DraftBoard';
 import TeamView from './TeamView';
 import LeaderBoard from './LeaderBoard';
-import { getTeams } from '../api/database';
+import { getTeams } from '../api/api-client';
 
 function AppComponent() {
   const [activeTab, setActiveTab] = useState('leaderboard');

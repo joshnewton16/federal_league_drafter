@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDraftPicks, getTeams, getCurrentYear } from '../../api/database';
+import { getDraftResults, getTeams, getCurrentYear } from '../../api/api-client';
 import './DraftBoard.css'; // Make sure this path is correct
 
 // Inline styles for more direct control
@@ -68,7 +68,7 @@ const DraftBoard = () => {
         setTeams(teamsData);
         
         // Get draft picks
-        const picks = await getDraftPicks();
+        const picks = await getDraftResults();
         console.log("Received draft picks:", picks);
         setDraftPicks(picks);
         

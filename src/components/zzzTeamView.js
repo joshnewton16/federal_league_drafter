@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getTeam, getTeamDraftPicks, updateTeam } from '../api/database';
-import { getPlayerById } from '../api/database';
+import { getTeam, getTeamDraftPicks, updateTeam } from '../api/api-client';
+import { getPlayerById } from '../api/api-client';
 
 const TeamView = ({ teams }) => {
   const [selectedTeamId, setSelectedTeamId] = useState('');

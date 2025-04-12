@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLeaderBoard, getLeagueDates } from '../../api/database';
+import { getLeaderBoard, getLeagueDates } from '../../api/api-client';
 import MLBRssFeed from './MLBRssFeed'; // adjust path as needed
 import './LeaderBoard.css';
 

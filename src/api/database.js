@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base URL for your backend API that connects to PostgreSQL
 //const API_BASE_URL = 'http://localhost:3001/api';
-const API_BASE_URL = '/api';
+//const API_BASE_URL = '/api';
 
 // Teams operations
 export const getTeams = async (yearId = null) => {
@@ -15,7 +15,7 @@ export const getTeams = async (yearId = null) => {
       yearFilter = '?currentYear=true'; // Parameter to get current year teams
     }
     
-    const response = await axios.get(`${API_BASE_URL}/teams${yearFilter}`);
+    const response = await axios.get(`/api/teams${yearFilter}`);
     return response.data;
   } catch (error) {
     console.error('Error getting teams:', error);
@@ -25,7 +25,7 @@ export const getTeams = async (yearId = null) => {
 
 export const getTeam = async (teamId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/teams/${teamId}`);
+    const response = await axios.get(`/api/teams/${teamId}`);
     return response.data;
   } catch (error) {
     console.error('Error getting team:', error);
@@ -35,7 +35,7 @@ export const getTeam = async (teamId) => {
 
 export const updateTeam = async (teamId, teamData) => {
   try {
-    await axios.put(`${API_BASE_URL}/teams/${teamId}`, teamData);
+    await axios.put(`/api/teams/${teamId}`, teamData);
   } catch (error) {
     console.error('Error updating team:', error);
     throw error;
@@ -46,7 +46,7 @@ export const updateTeam = async (teamId, teamData) => {
 export const getDraftPicks = async (yearId = null) => {
   try {
     const yearParam = yearId ? `?yearId=${yearId}` : '';
-    const response = await axios.get(`${API_BASE_URL}/draftResults${yearParam}`);
+    const response = await axios.get(`/api/draftResults${yearParam}`);
     return response.data;
   } catch (error) {
     console.error('Error getting draft picks:', error);
@@ -57,7 +57,7 @@ export const getDraftPicks = async (yearId = null) => {
 // Draft picks operations
 export const getLeaderBoard = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/leaderBoard`);
+    const response = await axios.get(`/api/leaderBoard`);
     return response.data;
   } catch (error) {
     console.error('Error getting leaderBoard:', error);
@@ -68,7 +68,7 @@ export const getLeaderBoard = async () => {
 // Draft picks operations
 export const getLeagueDates = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/leagueDates`);
+    const response = await axios.get(`/api/leagueDates`);
     return response.data;
   } catch (error) {
     console.error('Error getting leagueDates:', error);
@@ -95,7 +95,7 @@ export const addDraftPick = async (pickData) => {
     });
     
     // Call the database function draft_player
-    const response = await axios.post(`${API_BASE_URL}/draftPlayer`, {
+    const response = await axios.post(`/api/draftPlayer`, {
       player_api_lookup: formattedPlayerName,
       team_name: pickData.team_name,
       roster_position: pickData.roster_position || 'UTIL' // Default to UTIL if not specified
@@ -132,7 +132,7 @@ export const addDraftPick = async (pickData) => {
 export const getTeamDraftPicks = async (teamId, yearId = null) => {
   try {
     const yearParam = yearId ? `?yearId=${yearId}` : '';
-    const response = await axios.get(`${API_BASE_URL}/teams/${teamId}/draftResults${yearParam}`);
+    const response = await axios.get(`/api/teams/${teamId}/draftResults${yearParam}`);
     return response.data;
   } catch (error) {
     console.error('Error getting team draft picks:', error);
@@ -158,7 +158,7 @@ export const getPlayers = async (filters = {}) => {
       queryParams.append('teamId', filters.teamId);
     }
     
-    const url = `${API_BASE_URL}/players${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const url = `/api/players${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const response = await axios.get(url);
     
     return response.data;
@@ -170,7 +170,7 @@ export const getPlayers = async (filters = {}) => {
 
 export const searchPlayers = async (searchTerm) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/players/search?term=${encodeURIComponent(searchTerm)}`);
+    const response = await axios.get(`/api/players/search?term=${encodeURIComponent(searchTerm)}`);
     return response.data;
   } catch (error) {
     console.error('Error searching players:', error);
@@ -180,7 +180,7 @@ export const searchPlayers = async (searchTerm) => {
 
 export const getPlayerById = async (playerId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/players/${playerId}`);
+    const response = await axios.get(`/api/players/${playerId}`);
     return response.data;
   } catch (error) {
     console.error('Error getting player:', error);
@@ -190,7 +190,7 @@ export const getPlayerById = async (playerId) => {
 
 export const getCurrentYear = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/currentYear`);
+    const response = await axios.get(`/api/currentYear`);
     return response.data;
   } catch (error) {
     console.error('Error getting current year:', error);
@@ -217,7 +217,7 @@ export const getTeamRoster = async (teamId) => {
   try {
     //console.log(`Making fetch request to /api/team-roster/${teamId}`);
     //console.log(`${API_BASE_URL}/team-roster/${teamId}`);
-    const response = await fetch(`${API_BASE_URL}/team-roster/${teamId}`);
+    const response = await fetch(`/api/team-roster/${teamId}`);
     //console.log(`Received response with status: ${response.status}`);
     
     if (!response.ok) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { getTeamRoster } from '../../api/database';
+import { getTeamRoster } from '../../api/api-client';
 import { useEffect } from 'react';
 
 const RosterSlotSelector = ({ 

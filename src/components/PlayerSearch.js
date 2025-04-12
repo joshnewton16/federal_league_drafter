@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { searchPlayersByName, getPlayerStats } from '../api/mlb';
-import { searchPlayers } from '../api/database';
+import { searchPlayers } from '../api/api-client';
 
 const PlayerSearch = () => {
   const [searchTerm, setSearchTerm] = useState('');

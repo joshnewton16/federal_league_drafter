@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDraftPicks, addDraftPick, getTeams, getCurrentYear, getTeamRoster } from '../api/database';
+import { getDraftPicks, addDraftPick, getTeams, getCurrentYear, getTeamRoster } from '../api/api-client';
 import { searchPlayersByName, getMlbTeams, searchMinorLeaguePlayers } from '../api/mlb';
 
 const DraftBoard = () => {

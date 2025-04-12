@@ -1,25 +1,116 @@
 // src/api/api-client.js
-// This is a sample of how to update your frontend API calls
-
 import axios from 'axios';
 
-// Create a base axios instance with relative URLs
+// Determine if we're in development or production
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+console.log('isDevelopment', isDevelopment);
+
+// Set the base URL accordingly
+const baseURL = isDevelopment 
+  ? 'http://localhost:3001/api'  // Use this for local development with Express
+  : '/api';                      // Use this for production on Vercel
+
+console.log(`API client initialized with baseURL: ${baseURL}`);
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Example API functions
+// Log all requests in development
+if (isDevelopment) {
+  api.interceptors.request.use(request => {
+    console.log('API Request:', request.method.toUpperCase(), request.url);
+    return request;
+  });
+  
+  api.interceptors.response.use(
+    response => {
+      console.log('API Response:', response.status, response.config.url);
+      return response;
+    },
+    error => {
+      console.error('API Error:', error.message, error.response?.status, error.config?.url);
+      return Promise.reject(error);
+    }
+  );
+}
+
+// API methods
 export const getTeams = async (currentYear = true) => {
   try {
-    // Notice we're using relative URLs now
-    const response = await api.get(`/teams?currentYear=${currentYear}`);
+    const response = await api.get(`/teams`, { params: { currentYear } });
     return response.data;
   } catch (error) {
     console.error('Error getting teams:', error);
+    throw error;
+  }
+};
+
+export const getCurrentYear = async () => {
+  try {
+    const response = await api.get('/currentYear');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting current year:', error);
+    throw error;
+  }
+};
+
+export const getDraftResults = async (yearId) => {
+  try {
+    const response = await api.get('/draftResults', { params: { yearId } });
+    return response.data;
+  } catch (error) {
+    console.error('Error getting draft results:', error);
+    throw error;
+  }
+};
+
+export const draftPlayer = async (playerApiLookup, teamName, rosterPosition) => {
+  try {
+    const response = await api.post('/draftPlayer', {
+      player_api_lookup: playerApiLookup,
+      team_name: teamName,
+      roster_position: rosterPosition
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error drafting player:', error);
+    throw error;
+  }
+};
+
+export const getTeamById = async (teamId) => {
+  try {
+    const response = await api.get(`/teams/${teamId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error getting team ${teamId}:`, error);
+    throw error;
+  }
+};
+
+export const getTeamDraftResults = async (teamId, yearId) => {
+  try {
+    const response = await api.get(`/teams/${teamId}/draftResults`, { params: { yearId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error getting draft results for team ${teamId}:`, error);
+    throw error;
+  }
+};
+
+export const searchPlayers = async (term) => {
+  try {
+    const response = await api.get('/player-search', { params: { term } });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching players:', error);
     throw error;
   }
 };
@@ -44,28 +135,14 @@ export const getLeagueDates = async () => {
   }
 };
 
-export const searchPlayers = async (term) => {
+export const getTeamRoster = async (teamId) => {
   try {
-    const response = await api.get(`/player-search?term=${encodeURIComponent(term)}`);
+    const response = await fetch(`/team-roster/${teamId}`);
     return response.data;
   } catch (error) {
-    console.error('Error searching players:', error);
-    throw error;
+    console.error(`Error in getTeamRoster for team ${teamId}:`, error);
+    return [];
   }
 };
 
-export const draftPlayer = async (playerApiLookup, teamName, rosterPosition) => {
-  try {
-    const response = await api.post('/draftPlayer', {
-      player_api_lookup: playerApiLookup,
-      team_name: teamName,
-      roster_position: rosterPosition
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error drafting player:', error);
-    throw error;
-  }
-};
-
-// Additional functions following the same pattern...
+export default api;

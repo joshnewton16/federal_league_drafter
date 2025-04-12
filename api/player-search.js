@@ -1,11 +1,13 @@
-// Combined player search endpoint
+// api/player-search.js
 const { pool, schemaPrefix } = require('./config/db');
 const axios = require('axios');
 const cors = require('./config/cors');
 
 module.exports = async (req, res) => {
+  // Set CORS headers
   cors(req, res);
   
+  // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }

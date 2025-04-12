@@ -1,24 +1,30 @@
-// Endpoint for drafting a player
-const { pool, schemaPrefix } = require('./config/db');
-const cors = require('./config/cors');
+// api/draftPlayer.js
+const { pool, schemaPrefix } = require('../config/db');
+const cors = require('../config/cors');
 
 module.exports = async (req, res) => {
+  // Set CORS headers
   cors(req, res);
   
+  // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
   
+  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   
   try {
-    const { player_api_lookup, team_name, roster_position } = JSON.parse(req.body);
+    // Parse request body - in serverless functions, req.body might already be parsed 
+    // or might be a string depending on the platform
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { player_api_lookup, team_name, roster_position } = body;
     
-    console.log('Drafting player:', { player_api_lookup, team_name, roster_position });
+    console.log('DraftPlayer API called with:', { player_api_lookup, team_name, roster_position });
     
-    // Add more detailed error handling and validation
+    // Validation
     if (!player_api_lookup) {
       return res.status(400).json({ error: 'Missing player_api_lookup parameter' });
     }
@@ -31,7 +37,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Missing roster_position parameter' });
     }
     
-    // Call the database function with error tracing
+    // Call the database function
     try {
       const result = await pool.query(
         `SELECT ${schemaPrefix}.draft_player($1, $2, $3) AS result`,

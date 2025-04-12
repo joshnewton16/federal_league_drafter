@@ -1,4 +1,4 @@
-// Serverless function for the /api/teams endpoint
+// api/teams.js
 const { pool, schemaPrefix } = require('./config/db');
 const cors = require('./config/cors');
 
@@ -14,6 +14,8 @@ module.exports = async (req, res) => {
   try {
     const { yearId, currentYear } = req.query;
     let query;
+    
+    console.log('Teams API called with:', { yearId, currentYear });
     
     if (currentYear === 'true') {
       // Get teams for the current year (where current_yr is true)
@@ -41,10 +43,14 @@ module.exports = async (req, res) => {
       `;
     }
     
+    console.log('Executing query:', query);
+    
     const result = yearId 
       ? await pool.query(query, [yearId])
       : await pool.query(query);
-      
+    
+    console.log(`Found ${result.rows.length} teams`);
+    
     return res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching teams:', error);

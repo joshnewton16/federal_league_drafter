@@ -1,4 +1,4 @@
-// Shared database configuration
+// api/config/db.js
 const { Pool } = require('pg');
 
 // Configure PostgreSQL connection
@@ -12,5 +12,14 @@ const pool = new Pool({
 
 // Setup schema prefix
 const schemaPrefix = process.env.DB_SCHEMA || 'federal_league';
+
+// Test database connection (this will run when the module is loaded)
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Database connection error:', err);
+  } else {
+    console.log('Database connected successfully:', res?.rows?.[0]?.now);
+  }
+});
 
 module.exports = { pool, schemaPrefix };
