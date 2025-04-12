@@ -2,9 +2,6 @@
   "name": "fantasy-baseball-draft",
   "version": "1.0.0",
   "private": true,
-  "engines": {
-    "node": "18.x"
-  },
   "scripts": {
     "build": "node ./node_modules/webpack/bin/webpack.js --mode production",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
