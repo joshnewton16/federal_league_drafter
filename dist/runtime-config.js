@@ -1,0 +1,1 @@
+window.runtimeConfig={apiBaseUrl:"http://localhost:3001/api"};

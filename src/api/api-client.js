@@ -1,17 +1,9 @@
 // src/api/api-client.js
 import axios from 'axios';
 
-// Determine if we're in development or production
-const isDevelopment = process.env.NODE_ENV === 'development';
-
-console.log('isDevelopment', isDevelopment);
-
-// Set the base URL accordingly
-const baseURL = isDevelopment 
-  ? 'http://localhost:3001/api'  // Use this for local development with Express
-  : '/api';                      // Use this for production on Vercel
-
-console.log(`API client initialized with baseURL: ${baseURL}`);
+const baseURL = window.runtimeConfig?.apiBaseUrl || '/api';
+console.log('Runtime config API URL:', window.runtimeConfig?.apiBaseUrl);
+console.log('Using API base URL:', baseURL);
 
 const api = axios.create({
   baseURL,
@@ -22,7 +14,7 @@ const api = axios.create({
 });
 
 // Log all requests in development
-if (isDevelopment) {
+if (!baseURL === '/api') {
   api.interceptors.request.use(request => {
     console.log('API Request:', request.method.toUpperCase(), request.url);
     return request;
