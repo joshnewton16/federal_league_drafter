@@ -876,3 +876,5 @@ app.get('/api/leagueDates', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch leagueDates' });
   }
 });
+
+app.use('/api/team-stats/:id', require('../api/team-stats/[id]'));

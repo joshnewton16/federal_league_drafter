@@ -1,12 +1,22 @@
 // api/teams/[id]/stats.js
-const { pool, schemaPrefix } = require('../../config/db');
-const cors = require('../../config/cors');
+const { pool, schemaPrefix } = require('../config/db');
+const cors = require('../config/cors');
 
 console.log('Stats API module loaded at:', new Date().toISOString());
 
 module.exports = async (req, res) => {
   // Set CORS headers
   cors(req, res);
+
+  // At the beginning of your handler
+  console.log('Full request info:', {
+    url: req.url,
+    originalUrl: req.originalUrl,
+    method: req.method,
+    query: req.query,
+    params: req.params,
+    body: req.body
+  });
   
   // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
@@ -17,11 +27,9 @@ module.exports = async (req, res) => {
   // In Vercel serverless, the parameter is usually in req.query.id or similar
   // We need to parse the URL manually
   const url = new URL(req.url, `http://${req.headers.host}`);
-  console.log('stats url', url);
-  const pathParts = url.pathname.split('/');
-  const id = pathParts[pathParts.length - 2]; // Get the ID from the second-to-last path segment
-
-  
+  //console.log('stats url', url);
+  const id = req.params.id
+  console.log('id', id);
   if (!id || isNaN(parseInt(id))) {
     return res.status(400).json({ error: 'Invalid team ID' });
   }

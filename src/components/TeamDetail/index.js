@@ -14,9 +14,12 @@ const TeamDetail = ({ teamId }) => {
       try {
         // Example API endpoints
         console.log('starting try');
-        const url = 'http://localhost:3001/api/team-stats/${encodeURIComponent(teamId)}'
-        console.log(url);
-        const response = await fetch(`http://localhost:3001/api/team-stats/${encodeURIComponent(teamId)}`); // Fixed: path should be teams, not team
+        const baseUrl = window.runtimeConfig && window.runtimeConfig.apiBaseUrl 
+          ? window.runtimeConfig.apiBaseUrl 
+          : '';
+        
+        console.log('Using API base URL:', baseUrl);
+        const response = await fetch(`${baseUrl}/team-stats/${encodeURIComponent(teamId)}`); 
         const data = await response.json();
         setTeamData(data);
         console.log('teamData', data); // Fixed: logging data instead of teamData which would be null
