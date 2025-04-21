@@ -63,6 +63,7 @@ function AppComponent() {
         return <LeaderBoard />;
       case 'teams':
         // Make sure we're passing teams properly
+        //console.log(teams);
         return <TeamView teams={teams} />;
       default:
         return <LeaderBoard />;

@@ -69,7 +69,7 @@ const DraftBoard = () => {
         
         // Get draft picks
         const picks = await getDraftResults();
-        console.log("Received draft picks:", picks);
+        //console.log("Received draft picks:", picks);
         setDraftPicks(picks);
         
         // Process existing picks
@@ -80,7 +80,7 @@ const DraftBoard = () => {
         // Auto-select the team that's on the clock
         determineTeamOnClock(teamsData, picks);
       } catch (error) {
-        console.error('Error loading data:', error);
+        //console.error('Error loading data:', error);
         setIsLoading(false);
       }
     };
@@ -90,8 +90,8 @@ const DraftBoard = () => {
 
   // Process existing picks to track drafted players and filled roster slots
   const processExistingPicks = (picks, teamsList) => {
-    console.log("Processing picks:", picks);
-    console.log("Team list:", teamsList);
+    //console.log("Processing picks:", picks);
+    //console.log("Team list:", teamsList);
     
     // Create set of already drafted players
     const draftedPlayerIds = new Set();
@@ -106,7 +106,7 @@ const DraftBoard = () => {
     
     // Process each draft pick
     picks.forEach(pick => {
-      console.log("Processing pick:", pick);
+      //console.log("Processing pick:", pick);
       
       // Add player to drafted players set
       if (pick.player_id) {
@@ -143,8 +143,8 @@ const DraftBoard = () => {
     setDraftedPlayers(draftedPlayerIds);
     setFilledRosterSlots(filledSlots);
     
-    console.log("Drafted players:", draftedPlayerIds);
-    console.log("Filled roster slots:", filledSlots);
+    //console.log("Drafted players:", draftedPlayerIds);
+    //console.log("Filled roster slots:", filledSlots);
   };
   
   // Determine which team is on the clock
@@ -174,7 +174,7 @@ const DraftBoard = () => {
     // Get the team on the clock
     const teamOnClock = sortedTeams[teamIndex];
     if (teamOnClock) {
-      console.log(`Team on clock: ${teamOnClock.team_name} (Round ${roundNumber}, Pick ${nextPickNumber})`);
+      //console.log(`Team on clock: ${teamOnClock.team_name} (Round ${roundNumber}, Pick ${nextPickNumber})`);
       setSelectedTeam(teamOnClock.team_id.toString());
     }
   };

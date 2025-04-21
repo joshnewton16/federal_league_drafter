@@ -97,6 +97,16 @@ export const getTeamDraftResults = async (teamId, yearId) => {
   }
 };
 
+export const getTeamStats = async (teamId) => {
+  try {
+    const response = await api.get(`/team-stats/${teamId}`, { params: { teamId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error getting stats for team ${teamId}:`, error);
+    throw error;
+  }
+};
+
 export const searchPlayers = async (term) => {
   try {
     const response = await api.get('/player-search', { params: { term } });

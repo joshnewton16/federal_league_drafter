@@ -40,7 +40,7 @@ const DraftHistory = ({ draftPicks, teams, displayMode }) => {
       );
       if (matchingTeam) {
         pick.team_id = matchingTeam.team_id;
-        console.log(`Mapped team name ${pick.team_name} to team_id ${pick.team_id}`);
+        //console.log(`Mapped team name ${pick.team_name} to team_id ${pick.team_id}`);
       }
     }
     
@@ -68,7 +68,7 @@ const DraftHistory = ({ draftPicks, teams, displayMode }) => {
         }
         picksByTeam[matchingTeam.team_id].push(pick);
       } else {
-        console.warn(`Could not find team ID for team name: ${pick.team_name}`);
+        //console.warn(`Could not find team ID for team name: ${pick.team_name}`);
       }
     }
     
@@ -81,9 +81,9 @@ const DraftHistory = ({ draftPicks, teams, displayMode }) => {
     picksByRound[roundNumber].push(pick);
   });
   
-  console.log("Processed picks:", processedPicks);
-  console.log("Picks by team:", picksByTeam);
-  console.log("Picks by round:", picksByRound);
+  //console.log("Processed picks:", processedPicks);
+  //console.log("Picks by team:", picksByTeam);
+  //console.log("Picks by round:", picksByRound);
   
   return (
     <div className="draft-history">

@@ -12,9 +12,10 @@ const TeamMenu = ({ teams, onSelectTeam, selectedTeam }) => {
       <h3>Select a Team</h3>
       <div className="team-menu-list">
         {sortedTeams.map((team) => (
+          
           <div 
-            key={team.team_name}
-            className={`team-menu-item ${selectedTeam && selectedTeam.team_name === team.team_name ? 'selected' : ''}`}
+            key={team.team_id}
+            className={`team-menu-item ${selectedTeam && selectedTeam.team_id === team.team_id ? 'selected' : ''}`}
             onClick={() => onSelectTeam(team)}
           >
             {team.team_name}

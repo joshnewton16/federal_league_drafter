@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-const TeamDetail = ({ teamName }) => {
+const TeamDetail = ({ teamId }) => {
   const [teamData, setTeamData] = useState(null);
   const [loading, setLoading] = useState(true);
+  console.log('teamId', teamId); // Fixed: lowercase 'd'
   
   useEffect(() => {
     // Replace with your actual API call
@@ -12,9 +13,13 @@ const TeamDetail = ({ teamName }) => {
       setLoading(true);
       try {
         // Example API endpoints
-        const response = await fetch(`/api/team/${encodeURIComponent(teamName)}`);
+        console.log('starting try');
+        const url = 'http://localhost:3001/api/team-stats/${encodeURIComponent(teamId)}'
+        console.log(url);
+        const response = await fetch(`http://localhost:3001/api/team-stats/${encodeURIComponent(teamId)}`); // Fixed: path should be teams, not team
         const data = await response.json();
         setTeamData(data);
+        console.log('teamData', data); // Fixed: logging data instead of teamData which would be null
       } catch (error) {
         console.error('Error fetching team data:', error);
       } finally {
@@ -22,10 +27,10 @@ const TeamDetail = ({ teamName }) => {
       }
     };
     
-    if (teamName) {
+    if (teamId) {
       fetchTeamData();
     }
-  }, [teamName]);
+  }, [teamId]);
   
   if (loading) {
     return <div className="team-loading">Loading team data...</div>;
@@ -37,7 +42,7 @@ const TeamDetail = ({ teamName }) => {
   
   return (
     <div className="team-detail-container">
-      <h2 className="team-name">{teamName}</h2>
+      <h2 className="team-id">{teamId}</h2>
       
       <div className="team-stats-summary">
         <div className="stat-card">

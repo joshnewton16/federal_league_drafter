@@ -1,4 +1,4 @@
-// api/teams/[id].js
+// api/team-roster/[id].js
 const { pool, schemaPrefix } = require('../config/db');
 const cors = require('../config/cors');
 
