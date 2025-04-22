@@ -43,6 +43,24 @@ const TeamDetail = ({ teamId }) => {
     return <div className="team-error">Could not load team information</div>;
   }
   
+  // Filter for players with roster_slot_id (Team Stats tab)
+  const rosterHitters = teamData.rows.filter(player => 
+      parseInt(player.roster_slot_id) < 20 ||
+      !player.player_positions.includes('P')
+  );
+  
+  // Filter for hitters (players with AB > 0)
+  const hitters = teamData.rows.filter(player => 
+    parseInt(player.ab) > 0 || 
+    (player.roster_slot_id >= 2 && player.roster_slot_id <= 12) // Position players
+  );
+  
+  // Filter for pitchers (players with p_g > 0)
+  const pitchers = teamData.rows.filter(player => 
+    parseInt(player.p_g) > 0 || 
+    (player.roster_slot_id >= 13 && player.roster_slot_id <= 19) // Pitchers
+  );
+
   return (
     <div className="team-detail-container">
       <h2 className="team-id">{teamId}</h2>
@@ -68,23 +86,42 @@ const TeamDetail = ({ teamId }) => {
         </TabList>
         
         <TabPanel>
-          <div className="stats-table-container">
+        <div className="stats-table-container">
             <table className="stats-table team-stats">
               <thead>
                 <tr>
-                  <th>Category</th>
-                  <th>Team Total</th>
-                  <th>League Pts</th>
+                  <th>Pos</th>
+                  <th>Name</th>
+                  <th>G</th>
+                  <th>AB/IP</th>
+                  <th>R/W</th>
+                  <th>H/L</th>
+                  <th>HR/SV</th>
+                  <th>RBI/K</th>
+                  <th>BA/ERA</th>
+                  <th>SB/WHIP</th>
                 </tr>
               </thead>
               <tbody>
-                {teamData.teamStats?.map(stat => (
-                  <tr key={stat.category}>
-                    <td>{stat.category}</td>
-                    <td>{stat.value}</td>
-                    <td>{stat.leaguePoints}</td>
-                  </tr>
-                ))}
+                {rosterHitters.map(player => {
+                  const isPitcher = parseInt(player.p_g) > 0;
+                  const fullName = `${player.player_first_name} ${player.player_last_name}`;
+                  
+                  return (
+                    <tr key={player.player_id}>
+                      <td>{player.roster_slot_name}</td>
+                      <td className="player-name">{fullName}</td>
+                      <td>{isPitcher ? player.p_g : player.g}</td>
+                      <td>{isPitcher ? player.ip : player.ab}</td>
+                      <td>{isPitcher ? player.w : player.r}</td>
+                      <td>{isPitcher ? player.l : player.h}</td>
+                      <td>{isPitcher ? player.sv : player.hr}</td>
+                      <td>{isPitcher ? player.p_so : player.rbi}</td>
+                      <td>{isPitcher ? player.era : player.ba}</td>
+                      <td>{isPitcher ? player.whip : player.sb}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
     }
     
     console.log(`Found stats for team ID: ${id}`);
-    return res.status(200).json(result.rows[0]);
+    return res.status(200).json(result);
   } catch (error) {
     console.error(`Error fetching stats for team ${id}:`, error);
     return res.status(500).json({ error: 'Failed to fetch team stats' });
