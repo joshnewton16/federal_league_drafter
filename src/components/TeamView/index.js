@@ -55,9 +55,6 @@ const TeamView = ({ teams }) => {
           {selectedTeam ? (
             <div className="team-detail-content">
               <h3>{selectedTeam.team_name}</h3>
-              <p>Team ID: {selectedTeam.team_id || 'undefined'}</p>
-              <p>This is where detailed team information will be displayed.</p>
-              {/* Fixed the semicolon after TeamDetail component */}
               <TeamDetail teamId={selectedTeam.team_id} />
             </div>
           ) : (

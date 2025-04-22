@@ -1,5 +1,5 @@
 .stats-table {
-    width: 85%;
+    width: 800px;
     border: 1px solid;
     border-collapse: collapse
   }
@@ -14,7 +14,7 @@
 }
 
 .player-pos {
-  width: 40px;
+  width: 60px;
   text-align: left;
 }
 
@@ -22,4 +22,5 @@ th, td {
   border: 1px solid;
   border-collapse: collapse;
   text-align: center;
+  min-width: 30px;
 }
