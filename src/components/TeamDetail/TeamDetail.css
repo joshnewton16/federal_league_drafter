@@ -1,0 +1,25 @@
+.stats-table {
+    width: 85%;
+    border: 1px solid;
+    border-collapse: collapse
+  }
+
+.stats-table-container {
+  margin-bottom: 20px;
+}
+
+.player-name {
+  width: 40%;
+  text-align: left;
+}
+
+.player-pos {
+  width: 40px;
+  text-align: left;
+}
+
+th, td {
+  border: 1px solid;
+  border-collapse: collapse;
+  text-align: center;
+}

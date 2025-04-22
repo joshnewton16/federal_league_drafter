@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
+import './TeamDetail.css';
 
 const TeamDetail = ({ teamId }) => {
   const [teamData, setTeamData] = useState(null);
@@ -45,8 +46,11 @@ const TeamDetail = ({ teamId }) => {
   
   // Filter for players with roster_slot_id (Team Stats tab)
   const rosterHitters = teamData.rows.filter(player => 
-      parseInt(player.roster_slot_id) < 20 ||
-      !player.player_positions.includes('P')
+    (player.roster_slot_id >= 2 && player.roster_slot_id <= 12)
+  );
+
+  const rosterPitchers = teamData.rows.filter(player => 
+    (player.roster_slot_id >= 13 && player.roster_slot_id <= 19)
   );
   
   // Filter for hitters (players with AB > 0)
@@ -88,37 +92,77 @@ const TeamDetail = ({ teamId }) => {
         <TabPanel>
         <div className="stats-table-container">
             <table className="stats-table team-stats">
+              <thead className = "table-heading">
+                <tr>
+                  <th>Pos</th>
+                  <th>Name</th>
+                  <th>G</th>
+                  <th>AB</th>
+                  <th>R</th>
+                  <th>H</th>
+                  <th>BA</th>
+                  <th>HR</th>
+                  <th>RBI</th>
+                  <th>SB</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rosterHitters.map(player => {
+                  const fullName = `${player.player_first_name} ${player.player_last_name}`;
+                  
+                  return (
+                    <tr key={player.player_id}>
+                      <td className="player-pos">{player.roster_slot_name}</td>
+                      <td className="player-name">{fullName}</td>
+                      <td>{player.g}</td>
+                      <td>{player.ab}</td>
+                      <td>{player.r}</td>
+                      <td>{player.h}</td>
+                      <td>{player.ba}</td>
+                      <td>{player.hr}</td>
+                      <td>{player.rbi}</td>
+                      <td>{player.sb}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="stats-table-container">
+            <table className="stats-table team-stats">
               <thead>
                 <tr>
                   <th>Pos</th>
                   <th>Name</th>
                   <th>G</th>
-                  <th>AB/IP</th>
-                  <th>R/W</th>
-                  <th>H/L</th>
-                  <th>HR/SV</th>
-                  <th>RBI/K</th>
-                  <th>BA/ERA</th>
-                  <th>SB/WHIP</th>
+                  <th>IP</th>
+                  <th>W</th>
+                  <th>L</th>
+                  <th>K</th>
+                  <th>S</th>
+                  <th>ERA</th>
+                  <th>WHIP</th>
+                  <th>W-L</th>
                 </tr>
               </thead>
               <tbody>
-                {rosterHitters.map(player => {
-                  const isPitcher = parseInt(player.p_g) > 0;
+                {rosterPitchers.map(player => {
                   const fullName = `${player.player_first_name} ${player.player_last_name}`;
                   
                   return (
                     <tr key={player.player_id}>
                       <td>{player.roster_slot_name}</td>
                       <td className="player-name">{fullName}</td>
-                      <td>{isPitcher ? player.p_g : player.g}</td>
-                      <td>{isPitcher ? player.ip : player.ab}</td>
-                      <td>{isPitcher ? player.w : player.r}</td>
-                      <td>{isPitcher ? player.l : player.h}</td>
-                      <td>{isPitcher ? player.sv : player.hr}</td>
-                      <td>{isPitcher ? player.p_so : player.rbi}</td>
-                      <td>{isPitcher ? player.era : player.ba}</td>
-                      <td>{isPitcher ? player.whip : player.sb}</td>
+                      <td>{player.p_g}</td>
+                      <td>{player.ip}</td>
+                      <td>{player.w}</td>
+                      <td>{player.l}</td>
+                      <td>{player.so}</td>
+                      <td>{player.sv}</td>
+                      <td>{player.era}</td>
+                      <td>{player.whip}</td>
+                      <td>{player.w-player.l}</td>
                     </tr>
                   );
                 })}
