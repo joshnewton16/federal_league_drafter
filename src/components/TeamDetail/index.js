@@ -73,9 +73,6 @@ const TeamDetail = ({ teamId }) => {
         <div className="stat-card">
           <h3>Team Points</h3>
           <div className="stat-value">{teamData.totalPoints?.toFixed(1) || '0.0'}</div>
-        </div>
-        
-        <div className="stat-card">
           <h3>League Rank</h3>
           <div className="stat-value">{teamData.leagueRank || 'N/A'}</div>
         </div>
@@ -83,7 +80,7 @@ const TeamDetail = ({ teamId }) => {
       
       <Tabs className="team-tabs">
         <TabList>
-          <Tab>Team Stats</Tab>
+          <Tab>Active Roster</Tab>
           <Tab>Hitters</Tab>
           <Tab>Pitchers</Tab>
           <Tab>Yesterday's Stats</Tab>
@@ -152,7 +149,7 @@ const TeamDetail = ({ teamId }) => {
                   
                   return (
                     <tr key={player.player_id}>
-                      <td>{player.roster_slot_name}</td>
+                      <td className="player-pos">{player.roster_slot_name}</td>
                       <td className="player-name">{fullName}</td>
                       <td>{player.p_g}</td>
                       <td>{player.ip}</td>
