@@ -55,27 +55,38 @@ const TeamDetail = ({ teamId }) => {
   
   // Filter for hitters (players with AB > 0)
   const hitters = teamData.rows.filter(player => 
-    parseInt(player.ab) > 0 || 
+    (player.roster_slot_id = 20 && !player.player_positions.includes('P')) || 
     (player.roster_slot_id >= 2 && player.roster_slot_id <= 12) // Position players
   );
   
   // Filter for pitchers (players with p_g > 0)
   const pitchers = teamData.rows.filter(player => 
-    parseInt(player.p_g) > 0 || 
+    (player.roster_slot_id = 20 && player.player_positions.includes('P'))|| 
     (player.roster_slot_id >= 13 && player.roster_slot_id <= 19) // Pitchers
   );
 
+  console.log('hitters', hitters);
+  console.log('pitchers', pitchers);
+
   return (
-    <div className="team-detail-container">
-      <h2 className="team-id">{teamId}</h2>
-      
+    <div className="team-detail-container">   
       <div className="team-stats-summary">
-        <div className="stat-card">
-          <h3>Team Points</h3>
-          <div className="stat-value">{teamData.totalPoints?.toFixed(1) || '0.0'}</div>
-          <h3>League Rank</h3>
-          <div className="stat-value">{teamData.leagueRank || 'N/A'}</div>
-        </div>
+        <table className="header-table">
+          <thead>
+            <th><h3>Team Points</h3></th>
+            <th><h3>League Rank</h3></th>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div className="stat-value">{teamData.totalPoints?.toFixed(1) || '0.0'}</div>
+              </td>
+              <td>
+                <div className="stat-value">{teamData.leagueRank || 'N/A'}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>          
       </div>
       
       <Tabs className="team-tabs">
